@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Cleaning Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #2c5aa0;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #1e3f6b;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧹 Cleaning Service</div>
+            <h1>Verify Your Email Address</h1>
+        </div>
+        
+        <p>Hello {{ user_name }},</p>
+        
+        <p>Thank you for registering with Cleaning Service! To complete your registration, please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ verification_url }}" class="button">Verify Email Address</a>
+        </div>
+        
+        <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #2c5aa0;">{{ verification_url }}</p>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This verification link will expire in 24 hours for security reasons.
+        </div>
+        
+        <p>If you didn't create an account with Cleaning Service, please ignore this email.</p>
+        
+        <p>Best regards,<br>
+        <strong>Cleaning Service Team</strong></p>
+        
+        <div class="footer">
+            <p>Need help? Contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+            <p>© 2024 Cleaning Service. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
