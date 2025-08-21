@@ -1,11 +1,10 @@
-from app.auth import get_current_user
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.auth_utils import (
     TOTPManager, TokenManager, PasswordManager, 
-    RateLimitManager, SecurityManager, EmailVerificationManager,
+    RateLimitManager, SecurityManager, EmailVerificationManager
 )
 from app.email_service import EmailService
 from app.schemas import (

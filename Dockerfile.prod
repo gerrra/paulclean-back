@@ -1,78 +1,55 @@
-# Production Dockerfile for Cleaning Service API
-# Multi-stage build for optimized production image
+# ---------- 1) BUILDER: ставим только то, что нужно для сборки ----------
+FROM python:3.11-slim AS builder
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Stage 1: Build dependencies
-FROM python:3.11-slim as builder
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# Install system dependencies for building
+# dev-пакеты ТОЛЬКО здесь: компиляторы и заголовки
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        gcc \
-        g++ \
-        libpq-dev \
-        libffi-dev \
-        libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends \
+      gcc g++ build-essential libpq-dev pkg-config \
+ && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copy and install requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Stage 2: Production runtime
-FROM python:3.11-slim as production
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    PATH="/opt/venv/bin:$PATH"
-
-# Install runtime dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libpq5 \
-        curl \
-        dumb-init \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-
-# Create app directory and user
 WORKDIR /app
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
 
-# Copy application code
-COPY --chown=appuser:appuser . .
+# заранее собираем колёса, чтобы в рантайме не компилировать
+COPY requirements.txt .
+RUN python -m venv /venv \
+ && /venv/bin/pip install -U pip wheel setuptools \
+ && /venv/bin/pip wheel --no-cache-dir -r requirements.txt -w /wheels
 
-# Create necessary directories
-RUN mkdir -p /app/logs /app/uploads \
-    && chown -R appuser:appuser /app/logs /app/uploads
+# если у вас есть локальные пакеты/скрипты — скопируйте их тоже
+COPY . .
 
-# Switch to non-root user
-USER appuser
+# ---------- 2) RUNTIME: только лёгкие зависимости и готовые колёса ----------
+FROM python:3.11-slim AS runtime
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Expose port
+# рантайм-пакеты: без компиляторов!
+# libpq5 — для psycopg2/psycopg, curl — на всякий случай, dumb-init — entrypoint
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libpq5 curl dumb-init \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# создаём виртуалку и ставим ТОЛЬКО уже собранные колёса
+COPY --from=builder /wheels /wheels
+RUN python -m venv /venv \
+ && /venv/bin/pip install --no-cache-dir /wheels/*
+
+# копируем исходники приложения (минимум нужного)
+COPY app ./app
+
+# если у вас есть файл run.py, раскомментируйте следующую строку:
+# COPY run.py ./
+
+# если нужны alembic-и:
+# COPY alembic alembic.ini
+
 EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-
-# Default command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["bash","-lc","uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"]
