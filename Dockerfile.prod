@@ -43,6 +43,10 @@ RUN python -m venv /venv \
 
 # копируем исходники приложения (минимум нужного)
 COPY app ./app
+COPY alembic.ini .
+COPY alembic alembic
+
+ENV ALEMBIC_CONFIG=/app/alembic.ini
 
 # если у вас есть файл run.py, раскомментируйте следующую строку:
 # COPY run.py ./
