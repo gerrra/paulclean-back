@@ -64,11 +64,23 @@ async def register_client(
     # Send email verification
     if settings.email_verification_required:
         verification_token = EmailVerificationManager.create_verification_token(client, db)
-        verification_url = f"https://localhost/verify-email?token={verification_token}"
+        # Используем правильный URL для API endpoint с токеном
+        verification_url = f"{request.base_url}verify-email/{verification_token}"
         
-        EmailService.send_verification_email(
+        # Отправляем email верификации
+        email_sent = EmailService.send_verification_email(
             client.email, verification_url, client.full_name
         )
+        
+        if email_sent:
+            print(f"✅ Verification email sent to {client.email}")
+        else:
+            print(f"❌ Failed to send verification email to {client.email}")
+            # В случае ошибки отправки email, можно автоматически верифицировать для разработки
+            if not settings.smtp_server or not settings.smtp_username:
+                print(f"⚠️  Auto-verifying email for {client.email} (SMTP not configured)")
+                client.email_verified = True
+                db.commit()
     
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
@@ -296,6 +308,43 @@ async def verify_email(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid verification token"
         )
+
+
+@router.get("/verify-email/{token}")
+async def verify_email_get(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """Verify email address via GET request (for email links)"""
+    # Find user by verification token
+    client = db.query(Client).filter(
+        Client.email_verification_token == token,
+        Client.email_verification_expires > datetime.utcnow()
+    ).first()
+    
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Verify email
+    if EmailVerificationManager.verify_email_token(client, token, db):
+        return {"message": "Email verified successfully"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification token"
+        )
+
+
+@router.get("/verify-email")
+async def verify_email_page():
+    """Show verification page (for frontend integration)"""
+    return {
+        "message": "Email verification",
+        "instructions": "Use the verification link from your email or provide token via POST request"
+    }
 
 
 @router.post("/setup-2fa", response_model=TOTPSetupResponse)

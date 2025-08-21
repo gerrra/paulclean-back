@@ -164,15 +164,15 @@ class SecurityManager:
     """Security and account lockout management"""
     
     @staticmethod
-    def check_account_lockout(user: User) -> bool:
-        """Check if account is locked"""
+    def check_account_lockout(user) -> bool:
+        """Check if account is locked for both User and Client"""
         if user.locked_until and user.locked_until > datetime.utcnow():
             return True
         return False
     
     @staticmethod
-    def increment_failed_login(user: User, db: Session) -> None:
-        """Increment failed login attempts"""
+    def increment_failed_login(user, db: Session) -> None:
+        """Increment failed login attempts for both User and Client"""
         user.failed_login_attempts += 1
         
         # Lock account after 5 failed attempts for 15 minutes
@@ -182,8 +182,8 @@ class SecurityManager:
         db.commit()
     
     @staticmethod
-    def reset_failed_login(user: User, db: Session) -> None:
-        """Reset failed login attempts"""
+    def reset_failed_login(user, db: Session) -> None:
+        """Reset failed login attempts for both User and Client"""
         user.failed_login_attempts = 0
         user.locked_until = None
         db.commit()
@@ -198,8 +198,8 @@ class EmailVerificationManager:
     """Email verification management"""
     
     @staticmethod
-    def create_verification_token(user: User, db: Session) -> str:
-        """Create email verification token"""
+    def create_verification_token(user, db: Session) -> str:
+        """Create email verification token for both User and Client"""
         token = PasswordManager.generate_verification_token()
         expires_at = datetime.utcnow() + timedelta(hours=settings.email_verification_token_expire_hours)
         
@@ -210,8 +210,8 @@ class EmailVerificationManager:
         return token
     
     @staticmethod
-    def verify_email_token(user: User, token: str, db: Session) -> bool:
-        """Verify email verification token"""
+    def verify_email_token(user, token: str, db: Session) -> bool:
+        """Verify email verification token for both User and Client"""
         if (user.email_verification_token == token and 
             user.email_verification_expires and 
             user.email_verification_expires > datetime.utcnow()):
