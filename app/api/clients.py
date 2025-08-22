@@ -4,7 +4,9 @@ from app.database import get_db
 from app.auth import get_current_user
 from app.schemas import ClientResponse, ClientUpdate
 from app.models import Client
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -14,6 +16,7 @@ async def get_client_profile(
     db: Session = Depends(get_db)
 ):
     """Get current client profile"""
+    logger.info(f"✅ Profile retrieved for client: {current_user.email}")
     return current_user
 
 
@@ -24,6 +27,9 @@ async def update_client_profile(
     db: Session = Depends(get_db)
 ):
     """Update current client profile"""
+    logger.info(f"🔄 Updating profile for client: {current_user.email}")
+    logger.info(f"📝 Update data: {profile_data}")
+    
     # Update only provided fields
     if profile_data.full_name is not None:
         current_user.full_name = profile_data.full_name
@@ -35,4 +41,17 @@ async def update_client_profile(
     db.commit()
     db.refresh(current_user)
     
+    logger.info(f"✅ Profile updated successfully for client: {current_user.email}")
     return current_user
+
+
+@router.get("/test-auth")
+async def test_auth(current_user: Client = Depends(get_current_user)):
+    """Test endpoint to verify authentication is working"""
+    logger.info(f"🧪 Auth test successful for client: {current_user.email}")
+    return {
+        "message": "Authentication successful",
+        "user_id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name
+    }

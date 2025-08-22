@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models import User, Client
+from app.auth_utils import TokenManager
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -21,25 +22,6 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
-    return encoded_jwt
-
-
-def verify_token(token: str) -> Optional[dict]:
-    try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        return payload
-    except JWTError:
-        return None
-
-
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
@@ -51,18 +33,33 @@ async def get_current_user(
     )
     
     token = credentials.credentials
-    payload = verify_token(token)
+    print(f"🔐 Debug: Received token: {token[:20]}...")  # Логируем первые 20 символов токена
+    
+    payload = TokenManager.verify_token(token)
     if payload is None:
+        print("❌ Debug: Token verification failed")
         raise credentials_exception
     
-    user_id: int = payload.get("sub")
+    print(f"✅ Debug: Token payload: {payload}")
+    
+    user_id: str = payload.get("sub")
     if user_id is None:
+        print("❌ Debug: No 'sub' field in token payload")
         raise credentials_exception
     
-    user = db.query(Client).filter(Client.id == user_id).first()
+    try:
+        user_id_int = int(user_id)
+        print(f"🔍 Debug: Looking for client with ID: {user_id_int}")
+    except ValueError:
+        print(f"❌ Debug: Invalid user_id format: {user_id}")
+        raise credentials_exception
+    
+    user = db.query(Client).filter(Client.id == user_id_int).first()
     if user is None:
+        print(f"❌ Debug: Client with ID {user_id_int} not found in database")
         raise credentials_exception
     
+    print(f"✅ Debug: Found client: {user.email}")
     return user
 
 
@@ -77,7 +74,7 @@ async def get_current_admin(
     )
     
     token = credentials.credentials
-    payload = verify_token(token)
+    payload = TokenManager.verify_token(token)
     if payload is None:
         raise credentials_exception
     

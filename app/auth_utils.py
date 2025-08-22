@@ -49,7 +49,13 @@ class TokenManager:
             expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
         
         to_encode.update({"exp": expire, "type": "access"})
-        return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+        print(f"🔧 Debug: Creating token with data: {to_encode}")
+        print(f"🔧 Debug: Using secret_key: {settings.secret_key[:20]}...")
+        print(f"🔧 Debug: Using algorithm: {settings.algorithm}")
+        
+        token = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+        print(f"✅ Debug: Token created: {token[:50]}...")
+        return token
     
     @staticmethod
     def create_refresh_token(user_id: int, user_type: str) -> Tuple[str, RefreshToken]:
@@ -70,9 +76,15 @@ class TokenManager:
     def verify_token(token: str) -> Optional[dict]:
         """Verify JWT token"""
         try:
+            print(f"🔍 Debug: Verifying token: {token[:20]}...")
             payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+            print(f"✅ Debug: Token verified successfully: {payload}")
             return payload
-        except JWTError:
+        except JWTError as e:
+            print(f"❌ Debug: JWT decode error: {e}")
+            return None
+        except Exception as e:
+            print(f"❌ Debug: Unexpected error in verify_token: {e}")
             return None
     
     @staticmethod

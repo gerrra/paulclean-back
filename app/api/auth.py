@@ -76,11 +76,9 @@ async def register_client(
             print(f"✅ Verification email sent to {client.email}")
         else:
             print(f"❌ Failed to send verification email to {client.email}")
-            # В случае ошибки отправки email, можно автоматически верифицировать для разработки
-            if not settings.smtp_server or not settings.smtp_username:
-                print(f"⚠️  Auto-verifying email for {client.email} (SMTP not configured)")
-                client.email_verified = True
-                db.commit()
+            # Не верифицируем автоматически - пользователь должен подтвердить email
+            print(f"⚠️  Email verification required for {client.email} but SMTP not configured")
+            # В продакшене здесь должен быть fallback механизм или уведомление администратора
     
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
@@ -162,11 +160,16 @@ async def login_client(
             )
     
     # Check email verification
+    print(f"🔍 Debug: email_verification_required = {settings.email_verification_required}")
+    print(f"🔍 Debug: client.email_verified = {client.email_verified}")
     if settings.email_verification_required and not client.email_verified:
+        print(f"❌ Debug: Blocking login - email not verified for {client.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified. Please check your email for verification link."
         )
+    else:
+        print(f"✅ Debug: Email verification check passed for {client.email}")
     
     # Reset failed login attempts
     SecurityManager.reset_failed_login(client, db)
@@ -206,8 +209,9 @@ async def login_admin(
         )
     
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    access_token = TokenManager.create_access_token(
+        data={"sub": user.username, "type": "admin"}, 
+        expires_delta=access_token_expires
     )
     
     return AdminLoginResponse(
@@ -497,3 +501,62 @@ async def confirm_password_reset(
     db.commit()
     
     return {"message": "Password reset successfully"}
+
+
+@router.post("/verify-token")
+async def verify_token_endpoint(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Verify if a token is valid and return user info"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No Authorization header"
+        )
+    
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format"
+        )
+    
+    token = auth_header.split(" ")[1]
+    print(f"🔍 Debug: Verifying token: {token[:20]}...")
+    
+    payload = TokenManager.verify_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    print(f"✅ Debug: Token payload: {payload}")
+    
+    user_id = payload.get("sub")
+    user_type = payload.get("type")
+    
+    if user_type == "client":
+        user = db.query(Client).filter(Client.id == int(user_id)).first()
+        if user:
+            return {
+                "valid": True,
+                "user_type": "client",
+                "user_id": user.id,
+                "email": user.email,
+                "full_name": user.full_name
+            }
+    elif user_type == "admin":
+        user = db.query(User).filter(User.username == user_id).first()
+        if user:
+            return {
+                "valid": True,
+                "user_type": "admin",
+                "username": user.username
+            }
+    
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User not found"
+    )

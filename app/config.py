@@ -22,12 +22,12 @@ class Settings(BaseSettings):
     rate_limit_window: int = 900
 
     # Email
-    smtp_server: Optional[str] = None
-    smtp_port: int = 587
-    smtp_username: Optional[str] = None
-    smtp_password: Optional[str] = None
-    smtp_tls: bool = True
-    smtp_starttls: bool = True
+    smtp_server: Optional[str] = "localhost"  # Локальный SMTP сервер для тестирования
+    smtp_port: int = 1025  # Порт локального SMTP сервера
+    smtp_username: Optional[str] = None  # Не нужен для локального сервера
+    smtp_password: Optional[str] = None  # Не нужен для локального сервера
+    smtp_tls: bool = False  # Отключаем TLS для локального сервера
+    smtp_starttls: bool = False  # Отключаем STARTTLS для локального сервера
 
     # Email verification
     email_verification_required: bool = True
@@ -52,9 +52,17 @@ class Settings(BaseSettings):
     cors_allow_headers: List[str] = ["*"]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="env.local",  # Используем локальный файл для тестирования
         extra="ignore",          # НЕ падать из-за лишних ключей
     )
 
 
 settings = Settings()
+
+# Debug: Print settings to verify they're loaded correctly
+print(f"🔧 Debug: Settings loaded:")
+print(f"  - Secret key: {settings.secret_key[:20]}...")
+print(f"  - Algorithm: {settings.algorithm}")
+print(f"  - Email verification required: {settings.email_verification_required}")
+print(f"  - SMTP server: {settings.smtp_server}")
+print(f"  - SMTP port: {settings.smtp_port}")

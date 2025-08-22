@@ -1,10 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.database import engine
 from app.models import Base
 from app.api import auth, clients, orders, admin
 from app.config import settings
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -27,6 +32,17 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
+# Middleware для логирования запросов
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"📥 {request.method} {request.url}")
+    logger.info(f"📋 Headers: {dict(request.headers)}")
+    
+    response = await call_next(request)
+    
+    logger.info(f"📤 Response status: {response.status_code}")
+    return response
+
 # Include routers
 app.include_router(auth.router, prefix="/api", tags=["Authentication"])
 app.include_router(clients.router, prefix="/api", tags=["Client"])
@@ -36,6 +52,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 # Global exception handler
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
+    logger.error(f"❌ HTTP Exception: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
         content={
