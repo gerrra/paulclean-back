@@ -43,7 +43,7 @@ class AdminLoginResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
-    role: str
+    user: 'UserResponse'
 
 
 class TOTPSetupRequest(BaseModel):
@@ -69,6 +69,7 @@ class RefreshTokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
+    email_verified: bool
 
 
 class EmailVerificationRequest(BaseModel):
@@ -99,6 +100,7 @@ class ClientResponse(BaseSchema):
     email: EmailStr
     phone: str
     address: str
+    email_verified: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -107,6 +109,18 @@ class ClientUpdate(BaseModel):
     full_name: Optional[str] = Field(None, min_length=2, max_length=100)
     phone: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
     address: Optional[str] = Field(None, min_length=10, max_length=500)
+    email_verified: Optional[bool] = None
+
+
+class UserResponse(BaseSchema):
+    id: int
+    username: str
+    email: EmailStr
+    role: str
+    email_verified: bool
+    totp_enabled: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 # Service schemas
