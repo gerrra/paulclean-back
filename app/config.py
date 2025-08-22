@@ -22,15 +22,15 @@ class Settings(BaseSettings):
     rate_limit_window: int = 900
 
     # Email
-    smtp_server: Optional[str] = "localhost"  # Локальный SMTP сервер для тестирования
-    smtp_port: int = 1025  # Порт локального SMTP сервера
-    smtp_username: Optional[str] = None  # Не нужен для локального сервера
-    smtp_password: Optional[str] = None  # Не нужен для локального сервера
-    smtp_tls: bool = False  # Отключаем TLS для локального сервера
-    smtp_starttls: bool = False  # Отключаем STARTTLS для локального сервера
+    smtp_server: Optional[str] = "smtp.gmail.com"  # Gmail SMTP сервер для реальной отправки
+    smtp_port: int = 587  # Порт Gmail SMTP
+    smtp_username: Optional[str] = None  # Будет загружен из env.local
+    smtp_password: Optional[str] = None  # Будет загружен из env.local
+    smtp_tls: bool = True  # Включаем TLS для Gmail
+    smtp_starttls: bool = True  # Включаем STARTTLS для Gmail
 
     # Email verification
-    email_verification_required: bool = True
+    email_verification_required: bool = False  # Временно отключено для тестирования
     email_verification_token_expire_hours: int = 24
 
     # Google Calendar
