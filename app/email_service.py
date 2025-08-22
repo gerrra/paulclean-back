@@ -20,7 +20,7 @@ class EmailService:
         text_content: Optional[str] = None
     ) -> bool:
         """Send email using configured SMTP settings"""
-        if not all([settings.smtp_server, settings.smtp_username, settings.smtp_password]):
+        if not settings.smtp_server:
             print(f"⚠️  SMTP not configured. Would send email to {to_email}: {subject}")
             return False
         
@@ -28,7 +28,7 @@ class EmailService:
             # Create message
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
-            msg['From'] = settings.smtp_username
+            msg['From'] = settings.smtp_username or "noreply@cleaningservice.com"
             msg['To'] = to_email
             
             # Add text and HTML parts
@@ -41,6 +41,7 @@ class EmailService:
                 if settings.smtp_starttls:
                     server.starttls()
                 
+                # Only login if credentials are provided
                 if settings.smtp_username and settings.smtp_password:
                     server.login(settings.smtp_username, settings.smtp_password)
                 

@@ -235,3 +235,43 @@ class EmailVerificationManager:
             return True
         
         return False
+    
+    @staticmethod
+    def can_resend_verification(user) -> bool:
+        """Check if verification email can be resent"""
+        # If email is already verified, no need to resend
+        if user.email_verified:
+            return False
+        
+        # If no token exists, can resend
+        if not user.email_verification_token:
+            return True
+        
+        # If token is expired, can resend
+        if not user.email_verification_expires or user.email_verification_expires <= datetime.utcnow():
+            return True
+        
+        # If token is still valid, can resend (but will reuse existing token)
+        return True
+    
+    @staticmethod
+    def get_verification_status(user) -> dict:
+        """Get verification status for user"""
+        if user.email_verified:
+            return {
+                "verified": True,
+                "has_valid_token": False,
+                "message": "Email is already verified"
+            }
+        
+        has_valid_token = (
+            user.email_verification_token and 
+            user.email_verification_expires and 
+            user.email_verification_expires > datetime.utcnow()
+        )
+        
+        return {
+            "verified": False,
+            "has_valid_token": has_valid_token,
+            "message": "Email not verified"
+        }

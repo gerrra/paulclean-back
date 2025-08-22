@@ -12,7 +12,7 @@ from app.schemas import (
     ClientRegistration, LoginRequest, LoginResponse, AdminLoginRequest, AdminLoginResponse,
     TOTPSetupRequest, TOTPSetupResponse, TOTPVerifyRequest, RefreshTokenRequest,
     RefreshTokenResponse, EmailVerificationRequest, PasswordResetRequest,
-    PasswordResetConfirmRequest, LogoutRequest
+    PasswordResetConfirmRequest, LogoutRequest, ResendEmailVerificationRequest
 )
 from app.models import Client, User, RefreshToken
 from app.config import settings
@@ -314,6 +314,73 @@ async def verify_email(
         )
 
 
+@router.post("/resend-verification-email")
+async def resend_verification_email(
+    request: Request,
+    resend_data: ResendEmailVerificationRequest,
+    db: Session = Depends(get_db)
+):
+    """Resend email verification email"""
+    # Rate limiting for resend requests
+    client_ip = request.client.host
+    rate_limit_key = f"resend_verification:{client_ip}"
+    
+    is_allowed, requests_count = RateLimitManager.check_rate_limit(rate_limit_key, db)
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many resend attempts. Try again later."
+        )
+    
+    # Find client by email
+    client = db.query(Client).filter(Client.email == resend_data.email).first()
+    if not client:
+        # Don't reveal if email exists or not for security
+        return {"message": "If the email exists and is not verified, a verification email has been sent"}
+    
+    # Check if verification email can be resent
+    if not EmailVerificationManager.can_resend_verification(client):
+        return {"message": "Email is already verified"}
+    
+    # Check if there's an existing valid token
+    if (client.email_verification_token and 
+        client.email_verification_expires and 
+        client.email_verification_expires > datetime.utcnow()):
+        
+        # Token is still valid, don't create new one
+        verification_url = f"{request.base_url}verify-email/{client.email_verification_token}"
+        
+        # Try to resend the existing email
+        email_sent = EmailService.send_verification_email(
+            client.email, verification_url, client.full_name
+        )
+        
+        if email_sent:
+            return {"message": "Verification email resent successfully"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email. Please try again later."
+            )
+    
+    # Create new verification token
+    verification_token = EmailVerificationManager.create_verification_token(client, db)
+    verification_url = f"{request.base_url}verify-email/{verification_token}"
+    
+    # Send new verification email
+    email_sent = EmailService.send_verification_email(
+        client.email, verification_url, client.full_name
+    )
+    
+    if email_sent:
+        return {"message": "New verification email sent successfully"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification email. Please try again later."
+        )
+
+
 @router.get("/verify-email/{token}")
 async def verify_email_get(
     token: str,
@@ -560,3 +627,19 @@ async def verify_token_endpoint(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="User not found"
     )
+
+
+@router.get("/email-verification-status")
+async def check_email_verification_status(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """Check email verification status"""
+    # Find client by email
+    client = db.query(Client).filter(Client.email == email).first()
+    if not client:
+        # Don't reveal if email exists or not for security
+        return {"verified": False, "message": "Email not found"}
+    
+    # Use EmailVerificationManager to get status
+    return EmailVerificationManager.get_verification_status(client)

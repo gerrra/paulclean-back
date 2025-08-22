@@ -75,6 +75,10 @@ class EmailVerificationRequest(BaseModel):
     token: str
 
 
+class ResendEmailVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
