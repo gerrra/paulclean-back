@@ -14,7 +14,7 @@ def test_registration():
     
     data = {
         "full_name": "Email Test User",
-        "email": "emailtest@example.com",
+        "email": "test-verification@paulcleanwa.com",
         "phone": "+1234567890",
         "address": "Test Address for Email",
         "password": "testpass123"
@@ -39,7 +39,7 @@ def test_login_without_verification():
     print("\n🔑 Тестирование логина без верификации...")
     
     data = {
-        "email": "emailtest@example.com",
+        "email": "test-verification@paulcleanwa.com",
         "password": "testpass123"
     }
     
@@ -67,7 +67,7 @@ def test_verification_endpoint():
         cursor = conn.cursor()
         
         cursor.execute("SELECT email_verification_token FROM clients WHERE email = ?", 
-                      ("emailtest@example.com",))
+                      ("test-verification@paulcleanwa.com",))
         result = cursor.fetchone()
         
         if result and result[0]:

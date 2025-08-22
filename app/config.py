@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True  # Включаем STARTTLS для Gmail
 
     # Email verification
-    email_verification_required: bool = False  # Временно отключено для тестирования
+    email_verification_required: bool = True  # Включено для продакшена
     email_verification_token_expire_hours: int = 24
 
     # Google Calendar
