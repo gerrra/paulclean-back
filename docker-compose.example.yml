@@ -11,7 +11,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://admin:3081594@localhost:5432/paul-clean-bd
       - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=W89Fy8E_KisTX7c64UsV7VNVLwpEexEyFPBA2AwQyiM3T2RZUH949iIOfW9OhdW9h9tT0ymW4bo3DcHWNn0kJw
+      - SECRET_KEY=YOUR_SECRET_KEY_HERE
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - WORKING_HOURS_START=10:00
       - WORKING_HOURS_END=19:00
