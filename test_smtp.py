@@ -1,63 +1,112 @@
 #!/usr/bin/env python3
-"""
-Тест SMTP подключения
-"""
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from app.config import settings
-from app.email_service import EmailService
-
-def test_smtp():
-    """Тестирует SMTP подключение"""
-    print("🧪 Тестирование SMTP подключения...")
-    print("=" * 50)
-    
-    # Проверяем настройки
-    print("📋 SMTP настройки:")
-    print(f"   Сервер: {settings.smtp_server}")
-    print(f"   Порт: {settings.smtp_port}")
-    print(f"   Пользователь: {settings.smtp_username}")
-    print(f"   TLS: {settings.smtp_tls}")
-    print(f"   STARTTLS: {settings.smtp_starttls}")
-    
-    if not all([settings.smtp_server, settings.smtp_username, settings.smtp_password]):
-        print("\n❌ SMTP настройки неполные!")
-        print("   Проверьте файл .env")
-        return False
-    
-    print("\n✅ SMTP настройки корректны")
-    
-    # Тестируем отправку email
-    test_email = "test@example.com"
-    test_url = "http://localhost:8000/verify-email/test-token"
-    
-    print(f"\n📧 Отправляем тестовый email на {test_email}...")
-    print(f"   Ссылка верификации: {test_url}")
-    
+def test_gmail_smtp():
+    """Тестируем подключение к Gmail SMTP"""
     try:
-        success = EmailService.send_verification_email(
-            test_email, test_url, "Test User"
-        )
+        # Пробуем разные порты и настройки
+        print("🔍 Тестируем Gmail SMTP...")
         
-        if success:
-            print("✅ Тестовый email отправлен успешно!")
-            print("\n📝 Теперь можете:")
-            print("1. Зарегистрировать нового пользователя")
-            print("2. Проверить почту - должно прийти письмо верификации")
-            print("3. Перейти по ссылке для подтверждения email")
-            print("4. Попробовать залогиниться")
+        # Тест 1: Порт 587 с STARTTLS
+        try:
+            print("  📧 Тест 1: Порт 587 с STARTTLS")
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+            server.starttls(context=ssl.create_default_context())
+            print("  ✅ Порт 587 доступен!")
+            server.quit()
             return True
-        else:
-            print("❌ Ошибка отправки тестового email")
-            print("   Проверьте логи приложения")
-            return False
+        except Exception as e:
+            print(f"  ❌ Порт 587 недоступен: {e}")
+        
+        # Тест 2: Порт 465 с SSL
+        try:
+            print("  📧 Тест 2: Порт 465 с SSL")
+            server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
+            print("  ✅ Порт 465 доступен!")
+            server.quit()
+            return True
+        except Exception as e:
+            print(f"  ❌ Порт 465 недоступен: {e}")
+        
+        # Тест 3: Порт 25 (стандартный)
+        try:
+            print("  📧 Тест 3: Порт 25 (стандартный)")
+            server = smtplib.SMTP('smtp.gmail.com', 25, timeout=10)
+            print("  ✅ Порт 25 доступен!")
+            server.quit()
+            return True
+        except Exception as e:
+            print(f"  ❌ Порт 25 недоступен: {e}")
             
+        return False
+        
     except Exception as e:
-        print(f"❌ Ошибка при тестировании SMTP: {e}")
+        print(f"❌ Общая ошибка: {e}")
+        return False
+
+def test_alternative_smtp():
+    """Тестируем альтернативные SMTP серверы"""
+    alternatives = [
+        ('smtp.mailgun.org', 587),
+        ('smtp.sendgrid.net', 587),
+        ('smtp.office365.com', 587),
+        ('smtp.zoho.com', 587),
+        ('smtp.yandex.ru', 587),
+    ]
+    
+    print("\n🔍 Тестируем альтернативные SMTP серверы...")
+    
+    for host, port in alternatives:
+        try:
+            print(f"  📧 Тестируем {host}:{port}")
+            server = smtplib.SMTP(host, port, timeout=10)
+            print(f"  ✅ {host}:{port} доступен!")
+            server.quit()
+            return host, port
+        except Exception as e:
+            print(f"  ❌ {host}:{port} недоступен: {e}")
+    
+    return None, None
+
+def test_local_smtp():
+    """Тестируем локальный SMTP"""
+    try:
+        print("\n🔍 Тестируем локальный SMTP...")
+        
+        # Пробуем подключиться к localhost
+        server = smtplib.SMTP('localhost', 25, timeout=5)
+        print("  ✅ Локальный SMTP доступен на порту 25!")
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"  ❌ Локальный SMTP недоступен: {e}")
         return False
 
 if __name__ == "__main__":
-    test_smtp()
+    print("🚀 Начинаем тестирование SMTP подключений...\n")
+    
+    # Тест Gmail
+    gmail_works = test_gmail_smtp()
+    
+    # Тест альтернатив
+    alt_host, alt_port = test_alternative_smtp()
+    
+    # Тест локального
+    local_works = test_local_smtp()
+    
+    print("\n📊 Результаты тестирования:")
+    print(f"  Gmail SMTP: {'✅ Работает' if gmail_works else '❌ Не работает'}")
+    print(f"  Альтернативный SMTP: {'✅ ' + alt_host if alt_host else '❌ Не найден'}")
+    print(f"  Локальный SMTP: {'✅ Работает' if local_works else '❌ Не работает'}")
+    
+    if gmail_works:
+        print("\n🎉 Gmail SMTP работает! Можно использовать для отправки email.")
+    elif alt_host:
+        print(f"\n🎉 Альтернативный SMTP {alt_host} работает! Можно настроить для отправки email.")
+    elif local_works:
+        print("\n🎉 Локальный SMTP работает! Можно настроить для отправки email.")
+    else:
+        print("\n❌ Все SMTP серверы недоступны. Нужно искать другие решения.")
