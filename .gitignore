@@ -1,0 +1,45 @@
+# Безопасность - НЕ КОММИТИТЬ СЕКРЕТЫ!
+.env
+.env.local
+.env.production
+.env.staging
+
+# Базы данных
+*.db
+*.db.backup
+*.sqlite
+*.sqlite3
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+*.bak
+*.backup
+*.backup2
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

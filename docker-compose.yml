@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: cleaning_service_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: cleaning_service_api
+    environment:
+      - DATABASE_URL=postgresql://paulclean_app_user:paulclean_app_password_2025@localhost:5432/paulclean_app
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-CHANGE_THIS_IN_PRODUCTION}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - WORKING_HOURS_START=10:00
+      - WORKING_HOURS_END=19:00
+      - SLOT_DURATION_MINUTES=30
+      - CORS_ORIGINS=["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://www.paulcleanwa.com"]
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.sendgrid.net}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-apikey}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-CHANGE_THIS_IN_PRODUCTION}
+      - SMTP_TLS=true
+      - SMTP_STARTTLS=true
+      - EMAIL_VERIFICATION_REQUIRED=true
+      - EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS=24
+    depends_on:
+      - redis
+    volumes:
+      - ./app:/app/app
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  redis_data:

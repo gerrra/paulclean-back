@@ -1,0 +1,85 @@
+version: '3.8'
+services:
+  api:
+    build: .
+    container_name: cleaning_service_api_stable
+    environment:
+      # Database - используем SQLite для стабильности
+      - DATABASE_URL=sqlite:///./cleaning_service_stable.db
+      
+      # Redis - для кеширования и сессий
+      - REDIS_URL=redis://redis:6379
+      
+      # Security
+      - SECRET_KEY=W89Fy8E_KisTX7c64UsV7VNVLwpEexEyFPBA2AwQyiM3T2RZUH949iIOfW9OhdW9h9tT0ymW4bo3DcHWNn0kJw
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      
+      # Business Logic
+      - WORKING_HOURS_START=10:00
+      - WORKING_HOURS_END=19:00
+      - SLOT_DURATION_MINUTES=30
+      
+      # CORS
+      - CORS_ORIGINS=["http://localhost:8080", "https://www.localhost:8080","https://preview--sparkle-shuttle.lovable.app","https://www.preview--sparkle-shuttle.lovable.app"]
+      
+      # Email - отключено для стабильности
+      - SMTP_SERVER=localhost
+      - SMTP_PORT=25
+      - SMTP_USERNAME=
+      - SMTP_PASSWORD=
+      - SMTP_TLS=false
+      - SMTP_STARTTLS=false
+      - EMAIL_VERIFICATION_REQUIRED=false
+      - EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS=24
+      
+      # Performance & Monitoring
+      - LOG_LEVEL=INFO
+      - REQUEST_TIMEOUT=30
+      - DATABASE_TIMEOUT=10
+      - REDIS_TIMEOUT=5
+      
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: cleaning_service_redis_stable
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis_data:
+    driver: local
