@@ -1,0 +1,32 @@
+[Unit]
+Description=Cleaning Service Monitor
+Documentation=https://github.com/your-repo/paulclean-back
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/fastapi-backend
+ExecStart=/opt/fastapi-backend/scripts/monitor_and_restart.sh
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cleaning-service-monitor
+
+# Ограничения ресурсов
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/fastapi-backend /var/log
+
+[Install]
+WantedBy=multi-user.target

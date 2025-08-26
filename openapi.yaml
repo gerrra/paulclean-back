@@ -1,0 +1,979 @@
+openapi: 3.1.0
+info:
+  title: Cleaning Service API
+  description: Backend API for cleaning service management with order processing, pricing calculations, and Google Calendar integration
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@cleaningservice.com
+
+servers:
+  - url: https://api.cleaningservice.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication endpoints
+  /api/register:
+    post:
+      tags: [Authentication]
+      summary: Client registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegistration'
+      responses:
+        '201':
+          description: Client registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/login:
+    post:
+      tags: [Authentication]
+      summary: Client authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/login:
+    post:
+      tags: [Admin]
+      summary: Admin authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        '200':
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Client profile endpoints
+  /api/profile:
+    get:
+      tags: [Client]
+      summary: Get client profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Client profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Client]
+      summary: Update client profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdate'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  # Order endpoints
+  /api/orders:
+    post:
+      tags: [Orders]
+      summary: Create new order
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '422':
+          description: Invalid timeslot or service parameters
+
+  /api/orders/{order_id}:
+    get:
+      tags: [Orders]
+      summary: Get order details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+
+  /api/orders/slots:
+    get:
+      tags: [Orders]
+      summary: Get available timeslots
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2024-01-15"
+      responses:
+        '200':
+          description: Available timeslots retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeslotsResponse'
+        '400':
+          description: Invalid date format
+
+  /api/orders/calc:
+    post:
+      tags: [Orders]
+      summary: Calculate order price and duration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCalculation'
+      responses:
+        '200':
+          description: Calculation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculationResponse'
+        '400':
+          description: Validation error
+
+  # Admin endpoints
+  /api/admin/orders:
+    get:
+      tags: [Admin]
+      summary: List all orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+        '401':
+          description: Unauthorized
+
+  /api/admin/orders/{order_id}/status:
+    put:
+      tags: [Admin]
+      summary: Update order status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdate'
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid status transition
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+
+  /api/admin/orders/{order_id}/cleaner:
+    put:
+      tags: [Admin]
+      summary: Assign cleaner to order
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanerAssignment'
+      responses:
+        '200':
+          description: Cleaner assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Cleaner not available
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order or cleaner not found
+
+  /api/admin/services:
+    get:
+      tags: [Admin]
+      summary: List all services
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Services retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Admin]
+      summary: Create new service
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceCreate'
+      responses:
+        '201':
+          description: Service created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/cleaners:
+    get:
+      tags: [Admin]
+      summary: List all cleaners
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cleaners retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CleanerResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Admin]
+      summary: Create new cleaner
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanerCreate'
+      responses:
+        '201':
+          description: Cleaner created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Authentication schemas
+    ClientRegistration:
+      type: object
+      required:
+        - full_name
+        - email
+        - phone
+        - address
+      properties:
+        full_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          example: "+1234567890"
+        address:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: "123 Main St, City, State 12345"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "password123"
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          example: "bearer"
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/ClientResponse'
+
+    AdminLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin123"
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: "bearer"
+        expires_in:
+          type: integer
+          example: 3600
+        role:
+          type: string
+          enum: [admin, super_admin]
+          example: "admin"
+
+    # Client schemas
+    ClientResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        full_name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          example: "+1234567890"
+        address:
+          type: string
+          example: "123 Main St, City, State 12345"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+
+    ClientUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+        address:
+          type: string
+          minLength: 10
+          maxLength: 500
+
+    # Service schemas
+    ServiceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Couch Cleaning"
+        description:
+          type: string
+          example: "Professional deep cleaning for all types of couches"
+        category:
+          type: string
+          enum: [couch, rug, window, other]
+          example: "couch"
+        price_per_removable_cushion:
+          type: number
+          minimum: 0
+          example: 30.0
+        price_per_unremovable_cushion:
+          type: number
+          minimum: 0
+          example: 18.0
+        price_per_pillow:
+          type: number
+          minimum: 0
+          example: 5.0
+        price_per_window:
+          type: number
+          minimum: 0
+          example: 25.0
+        base_surcharge_pct:
+          type: number
+          minimum: 0
+          example: 38.0
+        pet_hair_surcharge_pct:
+          type: number
+          minimum: 0
+          example: 15.0
+        urine_stain_surcharge_pct:
+          type: number
+          minimum: 0
+          example: 5.0
+        accelerated_drying_surcharge:
+          type: number
+          minimum: 0
+          example: 45.0
+        before_image:
+          type: string
+          format: uri
+          nullable: true
+        after_image:
+          type: string
+          format: uri
+          nullable: true
+        is_published:
+          type: boolean
+          example: true
+
+    ServiceCreate:
+      type: object
+      required:
+        - name
+        - description
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        category:
+          type: string
+          enum: [couch, rug, window, other]
+        price_per_removable_cushion:
+          type: number
+          minimum: 0
+        price_per_unremovable_cushion:
+          type: number
+          minimum: 0
+        price_per_pillow:
+          type: number
+          minimum: 0
+        price_per_window:
+          type: number
+          minimum: 0
+        base_surcharge_pct:
+          type: number
+          minimum: 0
+        pet_hair_surcharge_pct:
+          type: number
+          minimum: 0
+        urine_stain_surcharge_pct:
+          type: number
+          minimum: 0
+        accelerated_drying_surcharge:
+          type: number
+          minimum: 0
+        before_image:
+          type: string
+          format: uri
+        after_image:
+          type: string
+          format: uri
+        is_published:
+          type: boolean
+          default: false
+
+    # Cleaner schemas
+    CleanerResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        full_name:
+          type: string
+          example: "Jane Smith"
+        phone:
+          type: string
+          example: "+1234567890"
+        email:
+          type: string
+          format: email
+          example: "jane.smith@cleaningservice.com"
+        services:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3]
+        calendar_email:
+          type: string
+          format: email
+          nullable: true
+          example: "jane.smith@cleaningservice.com"
+
+    CleanerCreate:
+      type: object
+      required:
+        - full_name
+        - phone
+        - email
+      properties:
+        full_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+        email:
+          type: string
+          format: email
+        services:
+          type: array
+          items:
+            type: integer
+        calendar_email:
+          type: string
+          format: email
+
+    # Order schemas
+    OrderStatus:
+      type: string
+      enum: [Pending Confirmation, Confirmed, Completed, Cancelled]
+      example: "Pending Confirmation"
+
+    OrderCreate:
+      type: object
+      required:
+        - scheduled_date
+        - scheduled_time
+        - order_items
+        - notes
+      properties:
+        scheduled_date:
+          type: string
+          format: date
+          example: "2024-01-20"
+        scheduled_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "14:00"
+        order_items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItemCreate'
+        notes:
+          type: string
+          maxLength: 1000
+          example: "Please use eco-friendly cleaning products"
+
+    OrderItemCreate:
+      type: object
+      required:
+        - service_id
+        - parameters
+      properties:
+        service_id:
+          type: integer
+          example: 1
+        parameters:
+          $ref: '#/components/schemas/ServiceParameters'
+
+    ServiceParameters:
+      type: object
+      properties:
+        removable_cushion_count:
+          type: integer
+          minimum: 0
+          example: 2
+        unremovable_cushion_count:
+          type: integer
+          minimum: 0
+          example: 1
+        pillow_count:
+          type: integer
+          minimum: 0
+          example: 4
+        window_count:
+          type: integer
+          minimum: 0
+          example: 3
+        rug_width:
+          type: number
+          minimum: 0
+          example: 8.0
+        rug_length:
+          type: number
+          minimum: 0
+          example: 10.0
+        rug_count:
+          type: integer
+          minimum: 1
+          example: 1
+        base_cleaning:
+          type: boolean
+          example: true
+        pet_hair:
+          type: boolean
+          example: false
+        urine_stains:
+          type: boolean
+          example: false
+        accelerated_drying:
+          type: boolean
+          example: false
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        client:
+          $ref: '#/components/schemas/ClientResponse'
+        scheduled_date:
+          type: string
+          format: date
+          example: "2024-01-20"
+        scheduled_time:
+          type: string
+          example: "14:00"
+        total_duration_minutes:
+          type: integer
+          example: 180
+        total_price:
+          type: number
+          example: 245.50
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        cleaner:
+          $ref: '#/components/schemas/CleanerResponse'
+          nullable: true
+        notes:
+          type: string
+          example: "Please use eco-friendly cleaning products"
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        service:
+          $ref: '#/components/schemas/ServiceResponse'
+        parameters:
+          $ref: '#/components/schemas/ServiceParameters'
+        calculated_cost:
+          type: number
+          example: 120.75
+        calculated_time_minutes:
+          type: integer
+          example: 90
+
+    OrderStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        notes:
+          type: string
+          maxLength: 1000
+
+    CleanerAssignment:
+      type: object
+      required:
+        - cleaner_id
+      properties:
+        cleaner_id:
+          type: integer
+          example: 1
+
+    # Calculation schemas
+    OrderCalculation:
+      type: object
+      required:
+        - order_items
+      properties:
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemCreate'
+
+    CalculationResponse:
+      type: object
+      properties:
+        total_price:
+          type: number
+          example: 245.50
+        total_duration_minutes:
+          type: integer
+          example: 180
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+
+    # Timeslot schemas
+    TimeslotsResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2024-01-15"
+        available_slots:
+          type: array
+          items:
+            type: string
+            pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: ["10:00", "10:30", "11:00", "14:00", "14:30"]
+        working_hours:
+          type: object
+          properties:
+            start:
+              type: string
+              example: "10:00"
+            end:
+              type: string
+              example: "19:00"
+        slot_duration_minutes:
+          type: integer
+          example: 30
+
+    # Error schemas
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation error"
+        message:
+          type: string
+          example: "Invalid email format"
+        details:
+          type: object
+          additionalProperties: true
+
+tags:
+  - name: Authentication
+    description: Client and admin authentication endpoints
+  - name: Client
+    description: Client profile management
+  - name: Orders
+    description: Order creation and management
+  - name: Admin
+    description: Administrative operations (requires admin authentication)

@@ -1,0 +1,14 @@
+[33m706439b[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m 🧹 Cleanup project and add stable configuration with monitoring
+[33m718a064[m Add SendGrid email configuration with security best practices
+[33m1344638[m Add deployment scripts, documentation, and cleanup temporary files
+[33me1dbfd5[m доработка отправки писем
+[33ma364556[m добавил флаг подтвержденного емаейла
+[33m08bc15a[m feat: Add email verification status to user responses
+[33m7bd028f[m feat: Add resend email verification functionality
+[33mdc923f5[m fix(alembic): escape % in version_num_format (%%04d)
+[33mbdf07f4[m доработки по регистрации и авторизации
+[33m6a795a2[m Fix: pydantic v2 support, alembic config (%%04d), update CORS and migrations
+[33me833037[m настроил отправку писем по почте
+[33m4e556e7[m add .env to .gitignore
+[33m9c768f7[m Рабочий сваггер
+[33mfc764cc[m back
