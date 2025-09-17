@@ -1,0 +1,62 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H 165.22.43.35 >> ~/.ssh/known_hosts
+        
+    - name: Deploy to server
+      run: |
+        # Копируем файлы на сервер
+        scp -i ~/.ssh/id_ed25519 -r . root@165.22.43.35:/opt/fastapi-backend/
+        
+        # Подключаемся к серверу и выполняем деплой
+        ssh -i ~/.ssh/id_ed25519 root@165.22.43.35 << 'EOF'
+          cd /opt/fastapi-backend
+          
+          # Останавливаем текущие сервисы
+          docker-compose -f docker-compose.stable.yml down
+          
+          # Создаем резервную копию базы данных
+          if [ -f "data/cleaning_service_stable.db" ]; then
+            cp data/cleaning_service_stable.db "data/backup_$(date +%Y%m%d_%H%M%S).db"
+          fi
+          
+          # Запускаем новые сервисы
+          docker-compose -f docker-compose.stable.yml up -d --build
+          
+          # Ждем запуска сервисов
+          sleep 30
+          
+          # Проверяем статус
+          docker-compose -f docker-compose.stable.yml ps
+          
+          # Проверяем здоровье API
+          curl -f http://localhost:8000/health || exit 1
+          
+          echo "✅ Деплой завершен успешно!"
+        EOF
+        
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "🚀 Деплой завершен успешно!"
+        else
+          echo "❌ Деплой завершился с ошибкой!"
+        fi
