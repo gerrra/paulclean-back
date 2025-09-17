@@ -15,13 +15,7 @@ security = HTTPBearer()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Временная проверка для тестирования
-    if plain_password == hashed_password:
-        return True
     return pwd_context.verify(plain_password, hashed_password)
-    # Временная проверка для тестирования
-    if plain_password == "admin123" and hashed_password == "admin123":
-        return True
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 

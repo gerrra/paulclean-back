@@ -16,30 +16,30 @@ class PricingService:
         """
         base_cost = 0.0
         
-        if service.price_per_removable_cushion > 0 or service.price_per_unremovable_cushion > 0 or service.price_per_pillow > 0:
+        if (service.price_per_removable_cushion or 0) > 0 or (service.price_per_unremovable_cushion or 0) > 0 or (service.price_per_pillow or 0) > 0:
             base_cost = (
-                parameters.removable_cushion_count * service.price_per_removable_cushion +
-                parameters.unremovable_cushion_count * service.price_per_unremovable_cushion +
-                parameters.pillow_count * service.price_per_pillow
+                parameters.removable_cushion_count * (service.price_per_removable_cushion or 0) +
+                parameters.unremovable_cushion_count * (service.price_per_unremovable_cushion or 0) +
+                parameters.pillow_count * (service.price_per_pillow or 0)
             )
             
             # Apply surcharges
             if parameters.base_cleaning:
-                base_cost *= (1 + service.base_surcharge_pct / 100)
+                base_cost *= (1 + (service.base_surcharge_pct or 0) / 100)
             if parameters.pet_hair:
-                base_cost *= (1 + service.pet_hair_surcharge_pct / 100)
+                base_cost *= (1 + (service.pet_hair_surcharge_pct or 0) / 100)
             if parameters.urine_stains:
-                base_cost *= (1 + service.urine_stain_surcharge_pct / 100)
+                base_cost *= (1 + (service.urine_stain_surcharge_pct or 0) / 100)
             if parameters.accelerated_drying:
-                base_cost += service.accelerated_drying_surcharge
+                base_cost += (service.accelerated_drying_surcharge or 0)
                 
-        elif service.price_per_removable_cushion == 0 and service.price_per_unremovable_cushion == 0 and service.price_per_pillow == 0 and (parameters.rug_width > 0 or parameters.rug_length > 0):
+        elif (service.price_per_removable_cushion or 0) == 0 and (service.price_per_unremovable_cushion or 0) == 0 and (service.price_per_pillow or 0) == 0 and (parameters.rug_width > 0 or parameters.rug_length > 0):
             # Rug pricing based on area and count
             area = parameters.rug_width * parameters.rug_length
             base_cost = area * 2.5 * parameters.rug_count  # $2.50 per sq ft
             
-        elif service.price_per_window > 0:
-            base_cost = parameters.window_count * service.price_per_window
+        elif (service.price_per_window or 0) > 0:
+            base_cost = parameters.window_count * (service.price_per_window or 0)
             
         else:  # other
             base_cost = 50.0  # Default base price for other services

@@ -233,9 +233,20 @@ class OrderCreate(BaseModel):
 class OrderItemResponse(BaseSchema):
     id: int
     service: ServiceResponse
-    parameters: ServiceParameters
     calculated_cost: float
     calculated_time_minutes: int
+    # Individual fields from OrderItem model
+    removable_cushion_count: Optional[int] = None
+    unremovable_cushion_count: Optional[int] = None
+    pillow_count: Optional[int] = None
+    window_count: Optional[int] = None
+    rug_width: Optional[float] = None
+    rug_length: Optional[float] = None
+    rug_count: Optional[int] = None
+    base_cleaning: Optional[bool] = None
+    pet_hair: Optional[bool] = None
+    urine_stains: Optional[bool] = None
+    accelerated_drying: Optional[bool] = None
 
 
 class OrderResponse(BaseSchema):

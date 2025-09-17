@@ -54,10 +54,13 @@ def db_session():
 @pytest.fixture
 def sample_admin(db_session):
     """Create a sample admin user"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
     admin = User(
         username="admin",
         email="admin@test.com",
-        hashed_password=get_password_hash("admin123"),
+        hashed_password=pwd_context.hash("admin123"),
         role="admin"
     )
     db_session.add(admin)

@@ -69,7 +69,14 @@ class TestPricingService:
     
     def test_rug_cleaning(self):
         """Test rug cleaning pricing"""
-        service = Service(category="rug")
+        service = Service(
+            name="Rug Cleaning",
+            description="Professional rug cleaning",
+            category="rug",
+            price_per_removable_cushion=0,
+            price_per_unremovable_cushion=0,
+            price_per_pillow=0
+        )
         
         parameters = ServiceParameters(
             rug_width=8.0,
@@ -88,8 +95,13 @@ class TestPricingService:
     def test_window_cleaning(self):
         """Test window cleaning pricing"""
         service = Service(
+            name="Window Cleaning",
+            description="Professional window cleaning",
+            category="window",
             price_per_window=25.0,
-            category="window"
+            price_per_removable_cushion=0,
+            price_per_unremovable_cushion=0,
+            price_per_pillow=0
         )
         
         parameters = ServiceParameters(
@@ -115,7 +127,15 @@ class TestPricingService:
     
     def test_other_service_category(self):
         """Test other service category pricing"""
-        service = Service(category="other")
+        service = Service(
+            name="Other Service",
+            description="Generic cleaning service",
+            category="other",
+            price_per_removable_cushion=0,
+            price_per_unremovable_cushion=0,
+            price_per_pillow=0,
+            price_per_window=0
+        )
         parameters = ServiceParameters()
         
         cost, duration = PricingService.calculate_service_cost(service, parameters)
