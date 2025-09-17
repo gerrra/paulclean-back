@@ -11,10 +11,7 @@ on:
         default: 'false'
         type: boolean
 
-env:
-  SERVER_HOST: 165.22.43.35
-  SERVER_USER: root
-  DEPLOY_PATH: /opt/fastapi-backend
+# Environment variables moved to secrets for security
 
 jobs:
   test:
@@ -53,12 +50,12 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H ${{ env.SERVER_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
     - name: Create deployment backup
       run: |
-        ssh -i ~/.ssh/id_ed25519 ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
-          cd ${{ env.DEPLOY_PATH }}
+        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ${{ secrets.DEPLOY_PATH }}
           
           # Создаем резервную копию текущего состояния
           BACKUP_DIR="/opt/backups/$(date +%Y%m%d_%H%M%S)"
@@ -83,11 +80,11 @@ jobs:
           --exclude='*.pyc' \
           --exclude='.env' \
           --exclude='data/' \
-          ./ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/
+          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/
         
         # Выполняем деплой на сервере
-        ssh -i ~/.ssh/id_ed25519 ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
-          cd ${{ env.DEPLOY_PATH }}
+        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ${{ secrets.DEPLOY_PATH }}
           
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
@@ -131,7 +128,7 @@ jobs:
       run: |
         # Дополнительная проверка здоровья
         for i in {1..5}; do
-          if curl -f http://${{ env.SERVER_HOST }}:8000/health > /dev/null 2>&1; then
+          if curl -f http://${{ secrets.SERVER_HOST }}:8000/health > /dev/null 2>&1; then
             echo "✅ Внешняя проверка API прошла успешно!"
             exit 0
           fi
@@ -146,8 +143,8 @@ jobs:
       if: failure()
       run: |
         echo "🔄 Выполняем откат..."
-        ssh -i ~/.ssh/id_ed25519 ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
-          cd ${{ env.DEPLOY_PATH }}
+        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ${{ secrets.DEPLOY_PATH }}
           
           # Останавливаем проблемные сервисы
           docker-compose -f docker-compose.stable.yml down

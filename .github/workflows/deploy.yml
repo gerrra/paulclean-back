@@ -18,16 +18,16 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 165.22.43.35 >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
     - name: Deploy to server
       run: |
         # Копируем файлы на сервер
-        scp -i ~/.ssh/id_ed25519 -r . root@165.22.43.35:/opt/fastapi-backend/
+        scp -i ~/.ssh/id_ed25519 -r . ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/
         
         # Подключаемся к серверу и выполняем деплой
-        ssh -i ~/.ssh/id_ed25519 root@165.22.43.35 << 'EOF'
-          cd /opt/fastapi-backend
+        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ${{ secrets.DEPLOY_PATH }}
           
           # Останавливаем текущие сервисы
           docker-compose -f docker-compose.stable.yml down

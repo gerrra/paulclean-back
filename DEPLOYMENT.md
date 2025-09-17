@@ -14,7 +14,13 @@
 
 ## Быстрая настройка
 
-### 1. Добавить SSH ключ в GitHub Secrets
+### 1. Добавить секреты в GitHub
+
+**Необходимые секреты:**
+- `SERVER_SSH_KEY` - приватный SSH ключ
+- `SERVER_HOST` - IP сервера (165.22.43.35)
+- `SERVER_USER` - пользователь (root)
+- `DEPLOY_PATH` - путь деплоя (/opt/fastapi-backend)
 
 ```bash
 # Получить приватный ключ

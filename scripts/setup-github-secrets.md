@@ -24,7 +24,37 @@ ssh-keygen -t ed25519 -C "github-actions@paulclean.com"
 4. Name: `SERVER_SSH_KEY`
 5. Value: содержимое приватного ключа (начинается с `-----BEGIN OPENSSH PRIVATE KEY-----`)
 
-### 2. Настройка публичного ключа на сервере
+### 2. SERVER_HOST
+
+**Что это:** IP адрес или домен сервера
+
+**Как добавить в GitHub:**
+1. Settings → Secrets and variables → Actions
+2. New repository secret
+3. Name: `SERVER_HOST`
+4. Value: `165.22.43.35`
+
+### 3. SERVER_USER
+
+**Что это:** Имя пользователя для подключения к серверу
+
+**Как добавить в GitHub:**
+1. Settings → Secrets and variables → Actions
+2. New repository secret
+3. Name: `SERVER_USER`
+4. Value: `root`
+
+### 4. DEPLOY_PATH
+
+**Что это:** Путь к директории приложения на сервере
+
+**Как добавить в GitHub:**
+1. Settings → Secrets and variables → Actions
+2. New repository secret
+3. Name: `DEPLOY_PATH`
+4. Value: `/opt/fastapi-backend`
+
+### 5. Настройка публичного ключа на сервере
 
 ```bash
 # Скопируйте публичный ключ на сервер
