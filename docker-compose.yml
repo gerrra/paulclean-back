@@ -20,7 +20,7 @@ services:
       - WORKING_HOURS_START=10:00
       - WORKING_HOURS_END=19:00
       - SLOT_DURATION_MINUTES=30
-      - CORS_ORIGINS=["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://www.paulcleanwa.com"]
+      - CORS_ORIGINS=["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://public.paulcleanwa.com"]
       - SMTP_SERVER=${SMTP_SERVER:-smtp.sendgrid.net}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USERNAME=${SMTP_USERNAME:-apikey}

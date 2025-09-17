@@ -116,7 +116,7 @@ async def list_services(
     return services
 
 
-@router.post("/services", response_model=ServiceResponse, status_code=201)
+@router.post("/services/create", response_model=ServiceResponse, status_code=201)
 async def create_service(
     service_data: ServiceCreate,
     current_admin: User = Depends(get_current_admin),

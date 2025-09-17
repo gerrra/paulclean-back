@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379"
 
     # CORS  (в .env укажи JSON-массив в CORS_ORIGINS)
-    cors_origins: List[str] = ["http://localhost:3000", "https://localhost:3000"]
+    cors_origins: List[str] = ["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://public.paulcleanwa.com"]
     cors_allow_credentials: bool = True
     cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     cors_allow_headers: List[str] = ["*"]

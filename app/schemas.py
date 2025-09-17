@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional, List
 from datetime import datetime, date
-from app.models import OrderStatus, ServiceCategory
+from app.models import OrderStatus
 
 
 # Base schemas
@@ -128,7 +128,6 @@ class ServiceResponse(BaseSchema):
     id: int
     name: str
     description: str
-    category: str
     price_per_removable_cushion: float
     price_per_unremovable_cushion: float
     price_per_pillow: float
@@ -147,7 +146,6 @@ class ServiceResponse(BaseSchema):
 class ServiceCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=100)
     description: str = Field(..., min_length=10, max_length=1000)
-    category: ServiceCategory
     price_per_removable_cushion: Optional[float] = Field(0.0, ge=0)
     price_per_unremovable_cushion: Optional[float] = Field(0.0, ge=0)
     price_per_pillow: Optional[float] = Field(0.0, ge=0)

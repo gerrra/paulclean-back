@@ -16,7 +16,7 @@ class PricingService:
         """
         base_cost = 0.0
         
-        if service.category == "couch":
+        if service.price_per_removable_cushion > 0 or service.price_per_unremovable_cushion > 0 or service.price_per_pillow > 0:
             base_cost = (
                 parameters.removable_cushion_count * service.price_per_removable_cushion +
                 parameters.unremovable_cushion_count * service.price_per_unremovable_cushion +
@@ -33,12 +33,12 @@ class PricingService:
             if parameters.accelerated_drying:
                 base_cost += service.accelerated_drying_surcharge
                 
-        elif service.category == "rug":
+        elif service.price_per_removable_cushion == 0 and service.price_per_unremovable_cushion == 0 and service.price_per_pillow == 0 and (parameters.rug_width > 0 or parameters.rug_length > 0):
             # Rug pricing based on area and count
             area = parameters.rug_width * parameters.rug_length
             base_cost = area * 2.5 * parameters.rug_count  # $2.50 per sq ft
             
-        elif service.category == "window":
+        elif service.price_per_window > 0:
             base_cost = parameters.window_count * service.price_per_window
             
         else:  # other
