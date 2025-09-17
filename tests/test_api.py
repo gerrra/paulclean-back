@@ -180,7 +180,7 @@ class TestAdminEndpoints:
             "price_per_window": 20.0
         }
         
-        response = client.post("/api/admin/services", json=service_data, headers=headers)
+        response = client.post("/api/admin/services/create", json=service_data, headers=headers)
         
         assert response.status_code == 201
         data = response.json()

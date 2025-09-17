@@ -28,7 +28,7 @@ class TestTOTPManager:
         qr_url = TOTPManager.generate_qr_code(secret, email)
         
         assert "otpauth://totp/" in qr_url
-        assert email in qr_url
+        assert "test%40example.com" in qr_url  # URL encoded email
         assert secret in qr_url
     
     def test_verify_totp(self):
