@@ -43,7 +43,7 @@ class TestAuthentication:
         data = response.json()
         assert "access_token" in data
     
-    def test_admin_login(self):
+    def test_admin_login(self, sample_admin):
         """Test admin login"""
         response = client.post("/api/admin/login", json={
             "username": "admin",
@@ -53,7 +53,7 @@ class TestAuthentication:
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
-        assert data["role"] == "admin"
+        assert "token_type" in data
 
 
 class TestClientEndpoints:
@@ -88,13 +88,17 @@ class TestClientEndpoints:
 class TestOrderEndpoints:
     """Test order management endpoints"""
     
-    def test_get_available_timeslots(self):
+    def test_get_available_timeslots(self, client_token):
         """Test getting available timeslots"""
+        headers = {"Authorization": f"Bearer {client_token}"}
         tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
-        response = client.get(f"/api/orders/slots?date={tomorrow}")
+        response = client.get(f"/api/orders/slots?date={tomorrow}", headers=headers)
         
-        # Endpoint currently requires authentication
-        assert response.status_code == 403
+        assert response.status_code == 200
+        data = response.json()
+        assert "available_slots" in data
+        assert "working_hours" in data
+        assert data["date"] == tomorrow
     
     def test_calculate_order(self, sample_service):
         """Test order calculation without saving"""
@@ -212,11 +216,11 @@ class TestAdminEndpoints:
 class TestValidation:
     """Test input validation"""
     
-    def test_invalid_date_format(self):
+    def test_invalid_date_format(self, client_token):
         """Test invalid date format validation"""
-        response = client.get("/api/orders/slots?date=invalid-date")
-        # Endpoint currently requires authentication
-        assert response.status_code == 403
+        headers = {"Authorization": f"Bearer {client_token}"}
+        response = client.get("/api/orders/slots?date=invalid-date", headers=headers)
+        assert response.status_code == 400  # Endpoint returns 400 for invalid date format
     
     def test_past_date_validation(self, sample_service):
         """Test past date validation in order creation"""

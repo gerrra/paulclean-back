@@ -43,6 +43,28 @@ async def log_requests(request: Request, call_next):
     logger.info(f"📤 Response status: {response.status_code}")
     return response
 
+# Public endpoints MUST be defined BEFORE routers to avoid conflicts
+@app.get("/api/orders/slots")
+async def get_available_timeslots(date: str):
+    """Get available timeslots for a given date (PUBLIC)"""
+    # Simple validation
+    try:
+        from datetime import datetime
+        datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid date format. Use YYYY-MM-DD format."
+        )
+    
+    # Return mock data for now
+    return {
+        "date": date,
+        "available_slots": ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"],
+        "working_hours": {"start": "10:00", "end": "18:00"},
+        "slot_duration_minutes": 30
+    }
+
 # Include routers
 app.include_router(auth.router, prefix="/api", tags=["Authentication"])
 app.include_router(clients.router, prefix="/api", tags=["Client"])

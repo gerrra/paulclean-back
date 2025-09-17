@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.auth import get_current_user
@@ -107,23 +107,18 @@ async def get_order(
     return order
 
 
-@router.get("/orders/slots", response_model=TimeslotsResponse)
-async def get_available_timeslots(
-    date: str,
-    db: Session = Depends(get_db)
-):
-    """Get available timeslots for a given date"""
-    available_slots = OrderService.get_available_timeslots(date, db)
-    
-    return TimeslotsResponse(
-        date=date,
-        available_slots=available_slots,
-        working_hours={
-            "start": settings.working_hours_start,
-            "end": settings.working_hours_end
-        },
-        slot_duration_minutes=settings.slot_duration_minutes
-    )
+def validate_date_format(date_str: str) -> str:
+    """Validate date format and return the date string if valid"""
+    try:
+        from datetime import datetime
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return date_str
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Use YYYY-MM-DD format."
+        )
+
 
 
 @router.post("/orders/calc", response_model=CalculationResponse)
@@ -164,3 +159,4 @@ async def calculate_order(
         total_duration_minutes=total_duration,
         order_items=order_items
     )
+
