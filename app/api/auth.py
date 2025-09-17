@@ -72,7 +72,7 @@ async def register_client(
     
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = TokenManager.TokenManager.create_access_token(
+    access_token = TokenManager.create_access_token(
         data={"sub": str(client.id), "type": "client"}, 
         expires_delta=access_token_expires
     )
@@ -161,7 +161,7 @@ async def login_client(
     
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = TokenManager.TokenManager.create_access_token(
+    access_token = TokenManager.create_access_token(
         data={"sub": str(client.id), "type": "client"}, 
         expires_delta=access_token_expires
     )
@@ -251,7 +251,7 @@ async def refresh_token(
     
     # Create new access token and refresh token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = TokenManager.TokenManager.create_access_token(
+    access_token = TokenManager.create_access_token(
         data={"sub": str(user.id), "type": user_type}, 
         expires_delta=access_token_expires
     )

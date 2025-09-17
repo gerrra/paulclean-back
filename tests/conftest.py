@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.main import app
-from app.models import User, Service, Client, Cleaner
+# Import all models to ensure they are registered with Base.metadata
+from app.models import *
 from app.auth import get_password_hash
 
 # Create in-memory SQLite database for testing
@@ -17,6 +18,9 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Ensure all tables are created
+Base.metadata.create_all(bind=engine)
 
 
 def override_get_db():
@@ -35,6 +39,9 @@ client = TestClient(app)
 @pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test"""
+    # Drop all tables first to avoid conflicts
+    Base.metadata.drop_all(bind=engine)
+    # Create all tables fresh
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
@@ -62,11 +69,15 @@ def sample_admin(db_session):
 @pytest.fixture
 def sample_client(db_session):
     """Create a sample client"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
     client = Client(
         full_name="John Doe",
         email="john@test.com",
         phone="+1234567890",
-        address="123 Test St, Test City, TC 12345"
+        address="123 Test St, Test City, TC 12345",
+        hashed_password=pwd_context.hash("password123")
     )
     db_session.add(client)
     db_session.commit()

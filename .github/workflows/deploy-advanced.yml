@@ -34,9 +34,7 @@ jobs:
         
     - name: Run tests
       run: |
-        echo "⚠️ Tests temporarily disabled due to database schema issues"
-        echo "✅ Skipping tests for now - will be fixed in next iteration"
-        # python -m pytest tests/ -v --tb=short
+        python -m pytest tests/ -v --tb=short
 
   deploy:
     runs-on: ubuntu-latest
