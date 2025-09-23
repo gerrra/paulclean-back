@@ -94,7 +94,6 @@ def sample_service(db_session):
     service = Service(
         name="Couch Cleaning",
         description="Professional deep cleaning for all types of couches",
-        category="couch",
         price_per_removable_cushion=30.0,
         price_per_unremovable_cushion=18.0,
         price_per_pillow=5.0,

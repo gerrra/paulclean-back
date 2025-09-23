@@ -17,7 +17,6 @@ class TestPricingService:
             pet_hair_surcharge_pct=15.0,
             urine_stain_surcharge_pct=5.0,
             accelerated_drying_surcharge=45.0,
-            category="couch"
         )
         
         parameters = ServiceParameters(
@@ -43,7 +42,6 @@ class TestPricingService:
             pet_hair_surcharge_pct=15.0,
             urine_stain_surcharge_pct=5.0,
             accelerated_drying_surcharge=45.0,
-            category="couch"
         )
         
         parameters = ServiceParameters(
@@ -72,7 +70,6 @@ class TestPricingService:
         service = Service(
             name="Rug Cleaning",
             description="Professional rug cleaning",
-            category="rug",
             price_per_removable_cushion=0,
             price_per_unremovable_cushion=0,
             price_per_pillow=0
@@ -97,7 +94,6 @@ class TestPricingService:
         service = Service(
             name="Window Cleaning",
             description="Professional window cleaning",
-            category="window",
             price_per_window=25.0,
             price_per_removable_cushion=0,
             price_per_unremovable_cushion=0,
@@ -130,7 +126,6 @@ class TestPricingService:
         service = Service(
             name="Other Service",
             description="Generic cleaning service",
-            category="other",
             price_per_removable_cushion=0,
             price_per_unremovable_cushion=0,
             price_per_pillow=0,
