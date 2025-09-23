@@ -6,9 +6,10 @@ from app.schemas import (
     OrderCreate, OrderResponse, OrderCalculation, CalculationResponse,
     TimeslotsResponse
 )
-from app.models import Client, Order, OrderItem, Service
+from app.models import Client, Order, OrderItem, Service, PricingBlock, QuantityOption, TypeOption, ToggleOption
 from app.services import OrderService, PricingService
 from app.config import settings
+from app.schemas_pricing import ServicePricingRequest, ServicePricingResponse
 
 router = APIRouter()
 
@@ -124,6 +125,7 @@ def validate_date_format(date_str: str) -> str:
 @router.post("/orders/calc", response_model=CalculationResponse)
 async def calculate_order(
     calculation_data: OrderCalculation,
+    current_user: Client = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Calculate order price and duration without saving"""
@@ -158,5 +160,41 @@ async def calculate_order(
         total_price=total_price,
         total_duration_minutes=total_duration,
         order_items=order_items
+    )
+
+
+# Authorized service pricing calculation
+@router.post("/services/{service_id}/calculate-price", response_model=ServicePricingResponse)
+async def calculate_service_price(
+    service_id: int,
+    pricing_data: ServicePricingRequest,
+    current_user: Client = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Рассчитать стоимость услуги на основе выбранных опций (требует авторизации)"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+    
+    if not service.is_published:
+        raise HTTPException(status_code=404, detail="Услуга недоступна")
+    
+    # Загружаем блоки ценообразования
+    pricing_blocks = db.query(PricingBlock).filter(
+        PricingBlock.service_id == service_id,
+        PricingBlock.is_active == True
+    ).order_by(PricingBlock.order_index).all()
+    
+    service.pricing_blocks = pricing_blocks
+    
+    # Используем тот же калькулятор, что и в публичном API
+    from app.api.public_pricing import PricingCalculator
+    result = PricingCalculator.calculate_service_price(service, pricing_data)
+    
+    return ServicePricingResponse(
+        total_price=result["total_price"],
+        base_price=0,  # Пока не используем базовую цену
+        breakdown=result["breakdown"],
+        estimated_time_minutes=result["estimated_time_minutes"]
     )
 

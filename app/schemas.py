@@ -159,6 +159,22 @@ class ServiceCreate(BaseModel):
     is_published: Optional[bool] = False
 
 
+class ServiceUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=3, max_length=100)
+    description: Optional[str] = Field(None, min_length=10, max_length=1000)
+    price_per_removable_cushion: Optional[float] = Field(None, ge=0)
+    price_per_unremovable_cushion: Optional[float] = Field(None, ge=0)
+    price_per_pillow: Optional[float] = Field(None, ge=0)
+    price_per_window: Optional[float] = Field(None, ge=0)
+    base_surcharge_pct: Optional[float] = Field(None, ge=0)
+    pet_hair_surcharge_pct: Optional[float] = Field(None, ge=0)
+    urine_stain_surcharge_pct: Optional[float] = Field(None, ge=0)
+    accelerated_drying_surcharge: Optional[float] = Field(None, ge=0)
+    before_image: Optional[str] = None
+    after_image: Optional[str] = None
+    is_published: Optional[bool] = None
+
+
 # Cleaner schemas
 class CleanerResponse(BaseSchema):
     id: int

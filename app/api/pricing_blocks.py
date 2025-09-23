@@ -88,6 +88,19 @@ async def get_service_pricing_blocks(
     
     return blocks
 
+
+@router.get("/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
+async def get_pricing_block(
+    block_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить конкретный блок ценообразования"""
+    pricing_block = db.query(PricingBlock).filter(PricingBlock.id == block_id).first()
+    if not pricing_block:
+        raise HTTPException(status_code=404, detail="Блок ценообразования не найден")
+    
+    return pricing_block
+
 @router.put("/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
 async def update_pricing_block(
     block_id: int,

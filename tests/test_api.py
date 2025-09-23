@@ -100,8 +100,9 @@ class TestOrderEndpoints:
         assert "working_hours" in data
         assert data["date"] == tomorrow
     
-    def test_calculate_order(self, sample_service):
+    def test_calculate_order(self, sample_service, client_token):
         """Test order calculation without saving"""
+        headers = {"Authorization": f"Bearer {client_token}"}
         calculation_data = {
             "order_items": [
                 {
@@ -115,7 +116,7 @@ class TestOrderEndpoints:
             ]
         }
         
-        response = client.post("/api/orders/calc", json=calculation_data)
+        response = client.post("/api/orders/calc", json=calculation_data, headers=headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -182,7 +183,7 @@ class TestAdminEndpoints:
             "price_per_window": 20.0
         }
         
-        response = client.post("/api/admin/services/create", json=service_data, headers=headers)
+        response = client.post("/api/admin/services", json=service_data, headers=headers)
         
         assert response.status_code == 201
         data = response.json()
@@ -222,8 +223,9 @@ class TestValidation:
         response = client.get("/api/orders/slots?date=invalid-date", headers=headers)
         assert response.status_code == 400  # Endpoint returns 400 for invalid date format
     
-    def test_past_date_validation(self, sample_service):
+    def test_past_date_validation(self, sample_service, client_token):
         """Test past date validation in order creation"""
+        headers = {"Authorization": f"Bearer {client_token}"}
         yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
         
         response = client.post("/api/orders/calc", json={
@@ -233,7 +235,7 @@ class TestValidation:
                     "parameters": {}
                 }
             ]
-        })
+        }, headers=headers)
         
         # This should work since calc endpoint doesn't validate dates
         assert response.status_code in [200, 400]  # Either works or fails gracefully

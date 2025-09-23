@@ -5,7 +5,7 @@ from app.database import get_db
 from app.auth import get_current_admin
 from app.schemas import (
     OrderResponse, OrderStatusUpdate, CleanerAssignment,
-    ServiceResponse, ServiceCreate, CleanerResponse, CleanerCreate
+    ServiceResponse, ServiceCreate, ServiceUpdate, CleanerResponse, CleanerCreate
 )
 from app.models import User, Order, Service, Cleaner, OrderStatus
 from app.services import CleanerService
@@ -116,7 +116,7 @@ async def list_services(
     return services
 
 
-@router.post("/services/create", response_model=ServiceResponse, status_code=201)
+@router.post("/services", response_model=ServiceResponse, status_code=201)
 async def create_service(
     service_data: ServiceCreate,
     current_admin: User = Depends(get_current_admin),
@@ -128,6 +128,66 @@ async def create_service(
     db.commit()
     db.refresh(service)
     return service
+
+
+@router.get("/services/{service_id}", response_model=ServiceResponse)
+async def get_service(
+    service_id: int,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get service by ID"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found"
+        )
+    return service
+
+
+@router.put("/services/{service_id}", response_model=ServiceResponse)
+async def update_service(
+    service_id: int,
+    service_data: ServiceUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update service"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found"
+        )
+    
+    # Update only provided fields
+    update_data = service_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(service, field, value)
+    
+    db.commit()
+    db.refresh(service)
+    return service
+
+
+@router.delete("/services/{service_id}")
+async def delete_service(
+    service_id: int,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Delete service"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found"
+        )
+    
+    db.delete(service)
+    db.commit()
+    return {"message": "Service deleted successfully"}
 
 
 # Cleaner management endpoints
