@@ -36,6 +36,8 @@ async def list_orders(
     return orders
 
 
+
+
 @router.put("/orders/{order_id}/status", response_model=OrderResponse)
 async def update_order_status(
     order_id: int,
@@ -114,6 +116,8 @@ async def list_services(
     """List all services"""
     services = db.query(Service).all()
     return services
+
+
 
 
 @router.post("/services", response_model=ServiceResponse, status_code=201)
@@ -199,6 +203,8 @@ async def list_cleaners(
     """List all cleaners"""
     cleaners = db.query(Cleaner).all()
     return cleaners
+
+
 
 
 @router.post("/cleaners", response_model=CleanerResponse, status_code=201)
