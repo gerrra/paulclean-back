@@ -127,7 +127,7 @@ async def create_service(
     db: Session = Depends(get_db)
 ):
     """Create new service"""
-    service = Service(**service_data.dict())
+    service = Service(**service_data.model_dump())
     db.add(service)
     db.commit()
     db.refresh(service)
@@ -166,7 +166,7 @@ async def update_service(
         )
     
     # Update only provided fields
-    update_data = service_data.dict(exclude_unset=True)
+    update_data = service_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(service, field, value)
     
@@ -214,7 +214,7 @@ async def create_cleaner(
     db: Session = Depends(get_db)
 ):
     """Create new cleaner"""
-    cleaner = Cleaner(**cleaner_data.dict())
+    cleaner = Cleaner(**cleaner_data.model_dump())
     db.add(cleaner)
     db.commit()
     db.refresh(cleaner)

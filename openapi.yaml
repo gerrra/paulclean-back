@@ -581,106 +581,41 @@ components:
           example: "Couch Cleaning"
         description:
           type: string
+          nullable: true
           example: "Professional deep cleaning for all types of couches"
-        category:
-          type: string
-          enum: [couch, rug, window, other]
-          example: "couch"
-        price_per_removable_cushion:
-          type: number
-          minimum: 0
-          example: 30.0
-        price_per_unremovable_cushion:
-          type: number
-          minimum: 0
-          example: 18.0
-        price_per_pillow:
-          type: number
-          minimum: 0
-          example: 5.0
-        price_per_window:
-          type: number
-          minimum: 0
-          example: 25.0
-        base_surcharge_pct:
-          type: number
-          minimum: 0
-          example: 38.0
-        pet_hair_surcharge_pct:
-          type: number
-          minimum: 0
-          example: 15.0
-        urine_stain_surcharge_pct:
-          type: number
-          minimum: 0
-          example: 5.0
-        accelerated_drying_surcharge:
-          type: number
-          minimum: 0
-          example: 45.0
-        before_image:
-          type: string
-          format: uri
-          nullable: true
-        after_image:
-          type: string
-          format: uri
-          nullable: true
         is_published:
           type: boolean
           example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T10:00:00Z"
 
     ServiceCreate:
       type: object
       required:
         - name
-        - description
-        - category
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 100
+          example: "Couch Cleaning"
         description:
           type: string
           minLength: 10
           maxLength: 1000
-        category:
-          type: string
-          enum: [couch, rug, window, other]
-        price_per_removable_cushion:
-          type: number
-          minimum: 0
-        price_per_unremovable_cushion:
-          type: number
-          minimum: 0
-        price_per_pillow:
-          type: number
-          minimum: 0
-        price_per_window:
-          type: number
-          minimum: 0
-        base_surcharge_pct:
-          type: number
-          minimum: 0
-        pet_hair_surcharge_pct:
-          type: number
-          minimum: 0
-        urine_stain_surcharge_pct:
-          type: number
-          minimum: 0
-        accelerated_drying_surcharge:
-          type: number
-          minimum: 0
-        before_image:
-          type: string
-          format: uri
-        after_image:
-          type: string
-          format: uri
+          nullable: true
+          example: "Professional deep cleaning for all types of couches"
         is_published:
           type: boolean
           default: false
+          example: true
 
     # Cleaner schemas
     CleanerResponse:

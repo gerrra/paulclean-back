@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     cors_origins: List[str] = ["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://public.paulcleanwa.com"]
     cors_allow_credentials: bool = True
     cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    cors_allow_headers: List[str] = ["*"]
+    cors_allow_headers: List[str] = ["*", "Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"]
 
     model_config = SettingsConfigDict(
         env_file=None,  # Используем локальный файл для тестирования

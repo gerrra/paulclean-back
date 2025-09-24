@@ -93,20 +93,10 @@ class Service(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    price_per_removable_cushion = Column(Float, default=0.0)
-    price_per_unremovable_cushion = Column(Float, default=0.0)
-    price_per_pillow = Column(Float, default=0.0)
-    price_per_window = Column(Float, default=0.0)
-    base_surcharge_pct = Column(Float, default=0.0)
-    pet_hair_surcharge_pct = Column(Float, default=0.0)
-    urine_stain_surcharge_pct = Column(Float, default=0.0)
-    accelerated_drying_surcharge = Column(Float, default=0.0)
-    before_image = Column(String, nullable=True)
-    after_image = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
     is_published = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=sa_text('CURRENT_TIMESTAMP'))
-    updated_at = Column(DateTime(timezone=True), onupdate=sa_text('CURRENT_TIMESTAMP'))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     order_items = relationship("OrderItem", back_populates="service")
