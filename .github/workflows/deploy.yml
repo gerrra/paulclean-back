@@ -86,6 +86,10 @@ jobs:
         ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_PATH }}
           
+          # Обновляем код из репозитория
+          git fetch origin main
+          git reset --hard origin/main
+          
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
           echo "Deploying commit: $CURRENT_COMMIT"
@@ -98,6 +102,10 @@ jobs:
           
           # Ждем запуска
           sleep 30
+          
+          # Применяем миграции базы данных
+          echo "🔄 Применяем миграции базы данных..."
+          docker-compose -f docker-compose.stable.yml exec -T cleaning_service_api_stable alembic upgrade head
           
           # Проверяем статус контейнеров
           if ! docker-compose -f docker-compose.stable.yml ps | grep -q "Up"; then
