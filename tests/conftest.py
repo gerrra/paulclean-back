@@ -94,13 +94,6 @@ def sample_service(db_session):
     service = Service(
         name="Couch Cleaning",
         description="Professional deep cleaning for all types of couches",
-        price_per_removable_cushion=30.0,
-        price_per_unremovable_cushion=18.0,
-        price_per_pillow=5.0,
-        base_surcharge_pct=38.0,
-        pet_hair_surcharge_pct=15.0,
-        urine_stain_surcharge_pct=5.0,
-        accelerated_drying_surcharge=45.0,
         is_published=True
     )
     db_session.add(service)

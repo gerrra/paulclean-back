@@ -14,37 +14,39 @@ class PricingService:
         Calculate cost and time for a service based on parameters and business rules
         Returns: (cost, duration_minutes)
         """
-        base_cost = 0.0
+        # Упрощенная система ценообразования - фиксированная цена за услугу
+        base_cost = 100.0  # Базовая цена за услугу
         
-        if (service.price_per_removable_cushion or 0) > 0 or (service.price_per_unremovable_cushion or 0) > 0 or (service.price_per_pillow or 0) > 0:
-            base_cost = (
-                parameters.removable_cushion_count * (service.price_per_removable_cushion or 0) +
-                parameters.unremovable_cushion_count * (service.price_per_unremovable_cushion or 0) +
-                parameters.pillow_count * (service.price_per_pillow or 0)
-            )
-            
-            # Apply surcharges
-            if parameters.base_cleaning:
-                base_cost *= (1 + (service.base_surcharge_pct or 0) / 100)
-            if parameters.pet_hair:
-                base_cost *= (1 + (service.pet_hair_surcharge_pct or 0) / 100)
-            if parameters.urine_stains:
-                base_cost *= (1 + (service.urine_stain_surcharge_pct or 0) / 100)
-            if parameters.accelerated_drying:
-                base_cost += (service.accelerated_drying_surcharge or 0)
-                
-        elif (service.price_per_removable_cushion or 0) == 0 and (service.price_per_unremovable_cushion or 0) == 0 and (service.price_per_pillow or 0) == 0 and (parameters.rug_width > 0 or parameters.rug_length > 0):
-            # Rug pricing based on area and count
+        # Простая логика на основе параметров
+        if parameters.rug_width > 0 and parameters.rug_length > 0:
+            # Ценообразование для ковров на основе площади
             area = parameters.rug_width * parameters.rug_length
-            base_cost = area * 2.5 * parameters.rug_count  # $2.50 per sq ft
-            
-        elif (service.price_per_window or 0) > 0:
-            base_cost = parameters.window_count * (service.price_per_window or 0)
-            
-        else:  # other
-            base_cost = 50.0  # Default base price for other services
+            base_cost = area * 2.5 * parameters.rug_count  # $2.50 за кв.фут
+        elif parameters.window_count > 0:
+            # Ценообразование для окон
+            base_cost = parameters.window_count * 25.0  # $25 за окно
+        elif parameters.removable_cushion_count > 0 or parameters.unremovable_cushion_count > 0 or parameters.pillow_count > 0:
+            # Ценообразование для диванов
+            base_cost = (
+                parameters.removable_cushion_count * 30.0 +
+                parameters.unremovable_cushion_count * 18.0 +
+                parameters.pillow_count * 5.0
+            )
+        else:
+            # Базовая цена для других услуг
+            base_cost = 50.0
         
-        # Calculate duration based on total cost (business rule)
+        # Применяем надбавки
+        if parameters.base_cleaning:
+            base_cost *= 1.38  # 38% надбавка за базовую чистку
+        if parameters.pet_hair:
+            base_cost *= 1.15  # 15% надбавка за шерсть животных
+        if parameters.urine_stains:
+            base_cost *= 1.05  # 5% надбавка за пятна мочи
+        if parameters.accelerated_drying:
+            base_cost += 45.0  # $45 за ускоренную сушку
+        
+        # Рассчитываем продолжительность на основе общей стоимости
         duration = PricingService._map_cost_to_duration(base_cost)
         
         return round(base_cost, 2), duration
