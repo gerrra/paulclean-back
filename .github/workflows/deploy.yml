@@ -86,6 +86,10 @@ jobs:
         ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_PATH }}
           
+          # Обновляем git репозиторий
+          git fetch origin main
+          git reset --hard origin/main
+          
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
           echo "Deploying commit: $CURRENT_COMMIT"
