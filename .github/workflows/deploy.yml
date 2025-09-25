@@ -89,7 +89,7 @@ jobs:
           
           # Настраиваем SSH для GitHub
           mkdir -p ~/.ssh
-          echo "${{ secrets.GITHUB_SSH_KEY }}" > ~/.ssh/github_key
+          echo "${{ secrets.SSH_KEY_FOR_GITHUB }}" > ~/.ssh/github_key
           chmod 600 ~/.ssh/github_key
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
           
