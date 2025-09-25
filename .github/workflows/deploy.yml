@@ -51,6 +51,7 @@ jobs:
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H github.com >> ~/.ssh/known_hosts
         
     - name: Create deployment backup
       run: |
@@ -85,6 +86,21 @@ jobs:
         # Выполняем деплой на сервере
         ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_PATH }}
+          
+          # Настраиваем SSH для GitHub
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GITHUB_SSH_KEY }}" > ~/.ssh/github_key
+          chmod 600 ~/.ssh/github_key
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          
+          # Настраиваем SSH config для GitHub
+          cat > ~/.ssh/config << 'SSH_CONFIG'
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/github_key
+            IdentitiesOnly yes
+          SSH_CONFIG
           
           # Обновляем git репозиторий
           git fetch origin main
