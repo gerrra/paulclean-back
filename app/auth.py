@@ -10,7 +10,14 @@ from app.database import get_db
 from app.models import User, Client
 from app.auth_utils import TokenManager
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configure CryptContext with truncate_error=False to allow auto-truncation
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__default_rounds=12,
+    bcrypt__min_rounds=10,
+    bcrypt__max_rounds=14
+)
 security = HTTPBearer()
 
 

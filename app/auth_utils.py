@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import User, Client, RefreshToken, RateLimit
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configure CryptContext with truncate_error=False to allow auto-truncation
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__default_rounds=12,
+    bcrypt__min_rounds=10,
+    bcrypt__max_rounds=14
+)
 
 
 class TOTPManager:

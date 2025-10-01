@@ -34,7 +34,7 @@ jobs:
         
     - name: Run tests
       run: |
-        python -m pytest tests/ -v --tb=short || echo "Tests failed but continuing..."
+        python -m pytest tests/ -v --tb=short
 
   deploy:
     runs-on: ubuntu-latest
