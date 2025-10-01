@@ -54,13 +54,10 @@ def db_session():
 @pytest.fixture
 def sample_admin(db_session):
     """Create a sample admin user"""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    
     admin = User(
         username="admin",
         email="admin@test.com",
-        hashed_password=pwd_context.hash("admin123"),
+        hashed_password=get_password_hash("admin123"),
         role="admin"
     )
     db_session.add(admin)
@@ -72,15 +69,12 @@ def sample_admin(db_session):
 @pytest.fixture
 def sample_client(db_session):
     """Create a sample client"""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    
     client = Client(
         full_name="John Doe",
         email="john@test.com",
         phone="+1234567890",
         address="123 Test St, Test City, TC 12345",
-        hashed_password=pwd_context.hash("password123")
+        hashed_password=get_password_hash("password123")
     )
     db_session.add(client)
     db_session.commit()
