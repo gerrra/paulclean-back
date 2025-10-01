@@ -103,12 +103,13 @@ jobs:
           SSH_CONFIG
           
           # Обновляем git репозиторий
+          echo "🔄 Обновляем код из GitHub репозитория..."
           git fetch origin main
           git reset --hard origin/main
           
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
-          echo "Deploying commit: $CURRENT_COMMIT"
+          echo "✅ Код обновлен до коммита: $CURRENT_COMMIT"
           
           # Останавливаем сервисы
           docker-compose -f docker-compose.stable.yml down
