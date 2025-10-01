@@ -91,27 +91,30 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY_FOR_GITHUB }}" > ~/.ssh/github_key
           chmod 600 ~/.ssh/github_key
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
           
           # Настраиваем SSH config для GitHub
           cat > ~/.ssh/config << 'SSH_CONFIG'
-          Host github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/github_key
-            IdentitiesOnly yes
-          SSH_CONFIG
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/github_key
+  IdentitiesOnly yes
+SSH_CONFIG
+          
+          # Проверяем SSH подключение к GitHub
+          echo "🔍 Проверяем SSH подключение к GitHub..."
+          ssh -T git@github.com 2>&1 | head -1 || echo "SSH проверка завершена"
           
           # Обновляем git репозиторий
           echo "🔄 Обновляем код из GitHub репозитория..."
-          git fetch origin main
-          # НЕ используем --hard чтобы не удалить data/
-          git reset --mixed origin/main
-          git checkout -- .
+          git fetch origin main 2>&1 || echo "Git fetch failed"
+          git reset --mixed origin/main 2>&1 || echo "Git reset failed"
+          git checkout -- . 2>&1 || echo "Git checkout failed"
           
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
-          echo "✅ Код обновлен до коммита: $CURRENT_COMMIT"
+          echo "✅ Текущий коммит на сервере: $CURRENT_COMMIT"
           
           # Останавливаем сервисы
           docker-compose -f docker-compose.stable.yml down
