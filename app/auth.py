@@ -22,11 +22,24 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
+    print(f"🔐 DEBUG [auth.py]: get_password_hash called with password length: {len(password)}")
+    print(f"🔐 DEBUG [auth.py]: Password bytes length: {len(password.encode('utf-8'))}")
+    print(f"🔐 DEBUG [auth.py]: Password first 20 chars: {password[:20]}...")
+    
     # Bcrypt has a maximum password length of 72 bytes
     # Truncate password if longer to avoid errors
     if len(password.encode('utf-8')) > 72:
+        print(f"⚠️ DEBUG [auth.py]: Password too long, truncating from {len(password.encode('utf-8'))} bytes to 72")
         password = password[:72]
-    return pwd_context.hash(password)
+    
+    try:
+        hashed = pwd_context.hash(password)
+        print(f"✅ DEBUG [auth.py]: Password hashed successfully")
+        return hashed
+    except Exception as e:
+        print(f"❌ DEBUG [auth.py]: Error hashing password: {e}")
+        print(f"❌ DEBUG [auth.py]: Password length at error: {len(password)}, bytes: {len(password.encode('utf-8'))}")
+        raise
 
 
 async def get_current_user(

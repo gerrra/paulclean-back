@@ -117,11 +117,24 @@ class PasswordManager:
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Generate password hash"""
+        print(f"🔐 DEBUG: get_password_hash called with password length: {len(password)}")
+        print(f"🔐 DEBUG: Password bytes length: {len(password.encode('utf-8'))}")
+        print(f"🔐 DEBUG: Password first 20 chars: {password[:20]}...")
+        
         # Bcrypt has a maximum password length of 72 bytes
         # Truncate password if longer to avoid errors
         if len(password.encode('utf-8')) > 72:
+            print(f"⚠️ DEBUG: Password too long, truncating from {len(password.encode('utf-8'))} bytes to 72")
             password = password[:72]
-        return pwd_context.hash(password)
+        
+        try:
+            hashed = pwd_context.hash(password)
+            print(f"✅ DEBUG: Password hashed successfully")
+            return hashed
+        except Exception as e:
+            print(f"❌ DEBUG: Error hashing password: {e}")
+            print(f"❌ DEBUG: Password length at error: {len(password)}, bytes: {len(password.encode('utf-8'))}")
+            raise
     
     @staticmethod
     def generate_verification_token() -> str:
