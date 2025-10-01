@@ -9,11 +9,10 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import User, Client, RefreshToken, RateLimit
 
-# Configure CryptContext with truncate_error=False to allow auto-truncation
+# Configure CryptContext to handle password truncation
 pwd_context = CryptContext(
     schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__truncate_error=False  # Auto-truncate passwords longer than 72 bytes
+    deprecated="auto"
 )
 
 

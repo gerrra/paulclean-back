@@ -10,11 +10,10 @@ from app.database import get_db
 from app.models import User, Client
 from app.auth_utils import TokenManager
 
-# Configure CryptContext with truncate_error=False to allow auto-truncation
+# Configure CryptContext to handle password truncation
 pwd_context = CryptContext(
     schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__truncate_error=False  # Auto-truncate passwords longer than 72 bytes
+    deprecated="auto"
 )
 security = HTTPBearer()
 
