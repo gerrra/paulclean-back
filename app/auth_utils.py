@@ -13,9 +13,7 @@ from app.models import User, Client, RefreshToken, RateLimit
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    bcrypt__default_rounds=12,
-    bcrypt__min_rounds=10,
-    bcrypt__max_rounds=14
+    bcrypt__truncate_error=False  # Auto-truncate passwords longer than 72 bytes
 )
 
 
