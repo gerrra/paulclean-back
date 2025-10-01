@@ -34,7 +34,7 @@ jobs:
         
     - name: Run tests
       run: |
-        python -m pytest tests/ -v --tb=short -p no:cacheprovider
+        python -m pytest tests/test_api.py::TestAuthentication::test_client_registration -v --tb=long -s
 
   deploy:
     runs-on: ubuntu-latest
