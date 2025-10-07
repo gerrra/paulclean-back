@@ -94,13 +94,15 @@ jobs:
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
           
           # Настраиваем SSH config для GitHub
-          cat > ~/.ssh/config << 'SSHCONFIG'
-          Host github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/github_key
-            IdentitiesOnly yes
-          SSHCONFIG
+          echo "Host github.com" > ~/.ssh/config
+          echo "  HostName github.com" >> ~/.ssh/config
+          echo "  User git" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/github_key" >> ~/.ssh/config
+          echo "  IdentitiesOnly yes" >> ~/.ssh/config
+          
+          # Проверяем SSH config
+          echo "📋 Проверяем SSH config:"
+          cat ~/.ssh/config
           
           # Проверяем SSH подключение к GitHub
           echo "🔍 Проверяем SSH подключение к GitHub..."
