@@ -41,5 +41,13 @@ EXPOSE 8000
 # HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 #     CMD curl -f http://localhost:8000/health || exit 1
 
+# Create startup script
+RUN echo '#!/bin/bash\n\
+echo "🔄 Running database migrations..."\n\
+alembic upgrade head\n\
+echo "🚀 Starting FastAPI server..."\n\
+uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
+chmod +x /app/start.sh
+
 # Default command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/start.sh"]
