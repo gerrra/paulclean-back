@@ -94,13 +94,13 @@ jobs:
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
           
           # Настраиваем SSH config для GitHub
-          cat > ~/.ssh/config << 'EOF'
+          cat > ~/.ssh/config << 'SSHCONFIG'
           Host github.com
             HostName github.com
             User git
             IdentityFile ~/.ssh/github_key
             IdentitiesOnly yes
-          EOF
+          SSHCONFIG
           
           # Проверяем SSH подключение к GitHub
           echo "🔍 Проверяем SSH подключение к GitHub..."
