@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column('email', sa.String(), nullable=True),
         sa.Column('hashed_password', sa.String(), nullable=True),
         sa.Column('role', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -38,7 +38,7 @@ def upgrade() -> None:
         sa.Column('email', sa.String(), nullable=False),
         sa.Column('phone', sa.String(), nullable=False),
         sa.Column('address', sa.Text(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -61,7 +61,7 @@ def upgrade() -> None:
         sa.Column('before_image', sa.String(), nullable=True),
         sa.Column('after_image', sa.String(), nullable=True),
         sa.Column('is_published', sa.Boolean(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -73,7 +73,7 @@ def upgrade() -> None:
         sa.Column('phone', sa.String(), nullable=False),
         sa.Column('email', sa.String(), nullable=False),
         sa.Column('calendar_email', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -91,7 +91,7 @@ def upgrade() -> None:
         sa.Column('cleaner_id', sa.Integer(), nullable=True),
         sa.Column('notes', sa.Text(), nullable=True),
         sa.Column('google_calendar_event_id', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['cleaner_id'], ['cleaners.id'], ),
         sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),

@@ -45,8 +45,8 @@ def upgrade() -> None:
         sa.Column('user_type', sa.String(), nullable=False),
         sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('is_revoked', sa.Boolean(), default=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('last_used_at', sa.DateTime(timezone=True), onupdate=func.now()),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
+        sa.Column('last_used_at', sa.DateTime(timezone=True), onupdate=sa.text('CURRENT_TIMESTAMP')),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_refresh_tokens_token'), 'refresh_tokens', ['token'], unique=True)
@@ -58,7 +58,7 @@ def upgrade() -> None:
         sa.Column('key', sa.String(), nullable=False),
         sa.Column('requests_count', sa.Integer(), default=0),
         sa.Column('window_start', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_rate_limits_key'), 'rate_limits', ['key'])

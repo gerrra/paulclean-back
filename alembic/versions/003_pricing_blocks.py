@@ -24,7 +24,7 @@ def upgrade():
         sa.Column('order_index', sa.Integer(), nullable=True),
         sa.Column('is_required', sa.Boolean(), nullable=True),
         sa.Column('is_active', sa.Boolean(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['service_id'], ['services.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -40,7 +40,7 @@ def upgrade():
         sa.Column('min_quantity', sa.Integer(), nullable=True),
         sa.Column('max_quantity', sa.Integer(), nullable=True),
         sa.Column('unit_name', sa.String(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['pricing_block_id'], ['pricing_blocks.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -53,7 +53,7 @@ def upgrade():
         sa.Column('pricing_block_id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('options', sa.Text(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['pricing_block_id'], ['pricing_blocks.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -68,7 +68,7 @@ def upgrade():
         sa.Column('short_description', sa.String(), nullable=False),
         sa.Column('full_description', sa.Text(), nullable=True),
         sa.Column('percentage_increase', sa.Float(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['pricing_block_id'], ['pricing_blocks.id'], ),
         sa.PrimaryKeyConstraint('id')
