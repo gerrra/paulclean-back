@@ -115,6 +115,10 @@ jobs:
           echo "📋 Текущий коммит до обновления:"
           git rev-parse HEAD
           
+          echo "🔄 Очищаем все локальные изменения..."
+          git reset --hard HEAD
+          git clean -fd
+          
           echo "🔄 Выполняем git fetch..."
           if git fetch origin main; then
             echo "✅ Git fetch успешен"
@@ -123,7 +127,7 @@ jobs:
             exit 1
           fi
           
-          echo "🔄 Выполняем git reset --hard..."
+          echo "🔄 Выполняем git reset --hard origin/main..."
           if git reset --hard origin/main; then
             echo "✅ Git reset --hard успешен"
           else
@@ -131,7 +135,7 @@ jobs:
             exit 1
           fi
           
-          echo "🔄 Очищаем неотслеживаемые файлы..."
+          echo "🔄 Финальная очистка неотслеживаемых файлов..."
           git clean -fd
           
           # Сохраняем текущий коммит
