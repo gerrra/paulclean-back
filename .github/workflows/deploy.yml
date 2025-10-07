@@ -8,7 +8,7 @@ on:
       skip_tests:
         description: 'Skip tests'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 # Environment variables moved to secrets for security
@@ -123,21 +123,16 @@ jobs:
             exit 1
           fi
           
-          echo "🔄 Выполняем git reset..."
-          if git reset --mixed origin/main; then
-            echo "✅ Git reset успешен"
+          echo "🔄 Выполняем git reset --hard..."
+          if git reset --hard origin/main; then
+            echo "✅ Git reset --hard успешен"
           else
-            echo "❌ Git reset failed"
+            echo "❌ Git reset --hard failed"
             exit 1
           fi
           
-          echo "🔄 Выполняем git checkout..."
-          if git checkout -- .; then
-            echo "✅ Git checkout успешен"
-          else
-            echo "❌ Git checkout failed"
-            exit 1
-          fi
+          echo "🔄 Очищаем неотслеживаемые файлы..."
+          git clean -fd
           
           # Сохраняем текущий коммит
           CURRENT_COMMIT=$(git rev-parse HEAD)
@@ -155,10 +150,8 @@ jobs:
           # Создаем директорию для базы данных если её нет
           mkdir -p data
           
-          # Применяем миграции базы данных
-          echo "🔄 Применяем миграции базы данных..."
-          docker-compose -f docker-compose.stable.yml exec -T cleaning_service_api_stable alembic upgrade head
-          echo "✅ Миграции применены успешно!"
+          # Миграции выполняются автоматически при запуске контейнера через Dockerfile
+          echo "✅ Миграции будут выполнены автоматически при запуске контейнера"
           
           # Проверяем статус контейнеров
           if ! docker-compose -f docker-compose.stable.yml ps | grep -q "Up"; then
