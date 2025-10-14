@@ -43,6 +43,8 @@ EXPOSE 8000
 
 # Create startup script
 RUN echo '#!/bin/bash\n\
+echo "📁 Creating data directory..."\n\
+mkdir -p /app/data\n\
 echo "🔄 Running database migrations..."\n\
 alembic upgrade head\n\
 echo "🚀 Starting FastAPI server..."\n\

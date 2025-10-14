@@ -5,7 +5,7 @@ services:
     container_name: cleaning_service_api_stable
     environment:
       # Database - используем SQLite для стабильности
-      - DATABASE_URL=sqlite:///./cleaning_service_stable.db
+      - DATABASE_URL=sqlite:///./data/cleaning_service_stable.db
       
       # Redis - для кеширования и сессий
       - REDIS_URL=redis://redis:6379
