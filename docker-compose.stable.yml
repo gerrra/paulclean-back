@@ -20,7 +20,7 @@ services:
       - SLOT_DURATION_MINUTES=30
       
       # CORS
-      - CORS_ORIGINS=["http://localhost:8080", "https://www.localhost:8080","https://preview--sparkle-shuttle.lovable.app","https://www.preview--sparkle-shuttle.lovable.app"]
+      - CORS_ORIGINS=["http://localhost:8080", "http://localhost:3000", "https://admin.paulcleanwa.com", "https://public.paulcleanwa.com", "https://www.admin.paulcleanwa.com", "https://www.public.paulcleanwa.com"]
       
       # Email - отключено для стабильности
       - SMTP_SERVER=localhost
