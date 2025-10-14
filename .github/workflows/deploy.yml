@@ -74,16 +74,7 @@ jobs:
         
     - name: Deploy application
       run: |
-        # Копируем файлы на сервер
-        rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" \
-          --exclude='.git' \
-          --exclude='__pycache__' \
-          --exclude='*.pyc' \
-          --exclude='.env' \
-          --exclude='data/' \
-          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/
-        
-        # Выполняем деплой на сервере
+        # Выполняем деплой на сервере (код обновляется через git, не rsync)
         ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ${{ secrets.DEPLOY_PATH }}
           
