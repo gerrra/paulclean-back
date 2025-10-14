@@ -29,10 +29,10 @@ RUN pip install --no-cache-dir bcrypt==4.0.1
 # Copy application code
 COPY . .
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
-USER appuser
+# Create non-root user (commented out to avoid permission issues with mounted volumes)
+# RUN adduser --disabled-password --gecos '' appuser \
+#     && chown -R appuser:appuser /app
+# USER appuser
 
 # Expose port
 EXPOSE 8000
