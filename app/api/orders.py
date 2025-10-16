@@ -57,10 +57,55 @@ async def create_order(
     db.commit()
     db.refresh(order)
     
-    # Create order items
+    # Create order items using new pricing system
+    from app.api.public_pricing import PricingCalculator
+    from app.schemas_pricing import ServicePricingRequest, PricingBlockSelection
+    from app.models import PricingBlock
+    
     for item_data in order_data.order_items:
         service = db.query(Service).filter(Service.id == item_data.service_id).first()
-        cost, duration = PricingService.calculate_service_cost(service, item_data.parameters)
+        
+        # Загружаем блоки ценообразования для услуги
+        pricing_blocks = db.query(PricingBlock).filter(
+            PricingBlock.service_id == item_data.service_id,
+            PricingBlock.is_active == True
+        ).order_by(PricingBlock.order_index).all()
+        
+        service.pricing_blocks = pricing_blocks
+        
+        # Конвертируем ServiceParameters в ServicePricingRequest
+        pricing_selections = []
+        for block in pricing_blocks:
+            selection = PricingBlockSelection(block_id=block.id)
+            
+            if block.block_type == "quantity":
+                if "cushion" in block.name.lower():
+                    selection.quantity = item_data.parameters.removable_cushion_count + item_data.parameters.unremovable_cushion_count
+                elif "pillow" in block.name.lower():
+                    selection.quantity = item_data.parameters.pillow_count
+                elif "window" in block.name.lower():
+                    selection.quantity = item_data.parameters.window_count
+                elif "rug" in block.name.lower():
+                    selection.quantity = item_data.parameters.rug_count
+            
+            elif block.block_type == "toggle":
+                if "base" in block.name.lower() or "cleaning" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.base_cleaning
+                elif "pet" in block.name.lower() or "hair" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.pet_hair
+                elif "urine" in block.name.lower() or "stain" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.urine_stains
+                elif "drying" in block.name.lower() or "accelerated" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.accelerated_drying
+            
+            pricing_selections.append(selection)
+        
+        pricing_request = ServicePricingRequest(pricing_blocks=pricing_selections)
+        
+        # Рассчитываем цену через PricingCalculator
+        result = PricingCalculator.calculate_service_price(service, pricing_request)
+        cost = result["total_price"]
+        duration = result["estimated_time_minutes"]
         
         order_item = OrderItem(
             order_id=order.id,
