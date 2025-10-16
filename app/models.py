@@ -101,7 +101,7 @@ class Service(Base):
     # Relationships
     order_items = relationship("OrderItem", back_populates="service")
     cleaners = relationship("Cleaner", secondary=cleaner_service, back_populates="services")
-    pricing_blocks = relationship("PricingBlock", back_populates="service", order_by="PricingBlock.order_index")
+    pricing_blocks = relationship("PricingBlock", back_populates="service", order_by="PricingBlock.order_index", cascade="all, delete-orphan")
 
 
 class Cleaner(Base):
