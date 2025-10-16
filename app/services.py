@@ -5,67 +5,7 @@ from app.schemas import ServiceParameters, OrderItemCreate
 from app.config import settings
 
 
-class PricingService:
-    """Service for calculating prices and durations based on business rules"""
-    
-    @staticmethod
-    def calculate_service_cost(service: Service, parameters: ServiceParameters) -> Tuple[float, int]:
-        """
-        Calculate cost and time for a service based on parameters and business rules
-        Returns: (cost, duration_minutes)
-        """
-        # Упрощенная система ценообразования - фиксированная цена за услугу
-        base_cost = 100.0  # Базовая цена за услугу
-        
-        # Простая логика на основе параметров
-        if parameters.rug_width > 0 and parameters.rug_length > 0:
-            # Ценообразование для ковров на основе площади
-            area = parameters.rug_width * parameters.rug_length
-            base_cost = area * 2.5 * parameters.rug_count  # $2.50 за кв.фут
-        elif parameters.window_count > 0:
-            # Ценообразование для окон
-            base_cost = parameters.window_count * 25.0  # $25 за окно
-        elif parameters.removable_cushion_count > 0 or parameters.unremovable_cushion_count > 0 or parameters.pillow_count > 0:
-            # Ценообразование для диванов
-            base_cost = (
-                parameters.removable_cushion_count * 30.0 +
-                parameters.unremovable_cushion_count * 18.0 +
-                parameters.pillow_count * 5.0
-            )
-        else:
-            # Базовая цена для других услуг
-            base_cost = 50.0
-        
-        # Применяем надбавки
-        if parameters.base_cleaning:
-            base_cost *= 1.38  # 38% надбавка за базовую чистку
-        if parameters.pet_hair:
-            base_cost *= 1.15  # 15% надбавка за шерсть животных
-        if parameters.urine_stains:
-            base_cost *= 1.05  # 5% надбавка за пятна мочи
-        if parameters.accelerated_drying:
-            base_cost += 45.0  # $45 за ускоренную сушку
-        
-        # Рассчитываем продолжительность на основе общей стоимости
-        duration = PricingService._map_cost_to_duration(base_cost)
-        
-        return round(base_cost, 2), duration
-    
-    @staticmethod
-    def _map_cost_to_duration(cost: float) -> int:
-        """Map total cost to duration in minutes based on business rules"""
-        if cost < 120:
-            return 120  # 2 hours
-        elif cost < 200:
-            return 120  # 2 hours
-        elif cost < 300:
-            return 180  # 3 hours
-        elif cost < 400:
-            return 240  # 4 hours
-        elif cost < 500:
-            return 300  # 5 hours
-        else:
-            return 360  # 6 hours
+# PricingService удален - теперь используется PricingCalculator из app/api/public_pricing.py
 
 
 class OrderService:
@@ -73,7 +13,10 @@ class OrderService:
     
     @staticmethod
     def calculate_order_total(order_items: List[OrderItemCreate], db: Session) -> Tuple[float, int]:
-        """Calculate total price and duration for an order"""
+        """Calculate total price and duration for an order using PricingCalculator"""
+        from app.api.public_pricing import PricingCalculator
+        from app.schemas_pricing import ServicePricingRequest, PricingBlockSelection
+        
         total_price = 0.0
         total_duration = 0
         
@@ -82,9 +25,50 @@ class OrderService:
             if not service:
                 raise ValueError(f"Service with id {item.service_id} not found")
             
-            cost, duration = PricingService.calculate_service_cost(service, item.parameters)
-            total_price += cost
-            total_duration += duration
+            # Загружаем блоки ценообразования для услуги
+            from app.models import PricingBlock
+            pricing_blocks = db.query(PricingBlock).filter(
+                PricingBlock.service_id == item.service_id,
+                PricingBlock.is_active == True
+            ).order_by(PricingBlock.order_index).all()
+            
+            service.pricing_blocks = pricing_blocks
+            
+            # Конвертируем ServiceParameters в ServicePricingRequest
+            pricing_selections = []
+            for block in pricing_blocks:
+                selection = PricingBlockSelection(block_id=block.id)
+                
+                if block.block_type == "quantity":
+                    # Используем параметры из ServiceParameters для quantity блоков
+                    if "cushion" in block.name.lower():
+                        selection.quantity = item.parameters.removable_cushion_count + item.parameters.unremovable_cushion_count
+                    elif "pillow" in block.name.lower():
+                        selection.quantity = item.parameters.pillow_count
+                    elif "window" in block.name.lower():
+                        selection.quantity = item.parameters.window_count
+                    elif "rug" in block.name.lower():
+                        selection.quantity = item.parameters.rug_count
+                
+                elif block.block_type == "toggle":
+                    # Используем параметры из ServiceParameters для toggle блоков
+                    if "base" in block.name.lower() or "cleaning" in block.name.lower():
+                        selection.toggle_enabled = item.parameters.base_cleaning
+                    elif "pet" in block.name.lower() or "hair" in block.name.lower():
+                        selection.toggle_enabled = item.parameters.pet_hair
+                    elif "urine" in block.name.lower() or "stain" in block.name.lower():
+                        selection.toggle_enabled = item.parameters.urine_stains
+                    elif "drying" in block.name.lower() or "accelerated" in block.name.lower():
+                        selection.toggle_enabled = item.parameters.accelerated_drying
+                
+                pricing_selections.append(selection)
+            
+            pricing_request = ServicePricingRequest(pricing_blocks=pricing_selections)
+            
+            # Рассчитываем цену через PricingCalculator
+            result = PricingCalculator.calculate_service_price(service, pricing_request)
+            total_price += result["total_price"]
+            total_duration += result["estimated_time_minutes"]
         
         # Round duration to nearest 30 minutes
         total_duration = round(total_duration / 30) * 30

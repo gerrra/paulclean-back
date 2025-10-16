@@ -7,7 +7,7 @@ from app.schemas import (
     TimeslotsResponse
 )
 from app.models import Client, Order, OrderItem, Service, PricingBlock, QuantityOption, TypeOption, ToggleOption
-from app.services import OrderService, PricingService
+from app.services import OrderService
 from app.config import settings
 from app.schemas_pricing import ServicePricingRequest, ServicePricingResponse
 
@@ -139,11 +139,56 @@ async def calculate_order(
             detail=str(e)
         )
     
-    # Create mock order items for response
+    # Create mock order items for response using PricingCalculator
+    from app.api.public_pricing import PricingCalculator
+    from app.schemas_pricing import ServicePricingRequest, PricingBlockSelection
+    from app.models import PricingBlock
+    
     order_items = []
     for item_data in calculation_data.order_items:
         service = db.query(Service).filter(Service.id == item_data.service_id).first()
-        cost, duration = PricingService.calculate_service_cost(service, item_data.parameters)
+        
+        # Загружаем блоки ценообразования для услуги
+        pricing_blocks = db.query(PricingBlock).filter(
+            PricingBlock.service_id == item_data.service_id,
+            PricingBlock.is_active == True
+        ).order_by(PricingBlock.order_index).all()
+        
+        service.pricing_blocks = pricing_blocks
+        
+        # Конвертируем ServiceParameters в ServicePricingRequest
+        pricing_selections = []
+        for block in pricing_blocks:
+            selection = PricingBlockSelection(block_id=block.id)
+            
+            if block.block_type == "quantity":
+                if "cushion" in block.name.lower():
+                    selection.quantity = item_data.parameters.removable_cushion_count + item_data.parameters.unremovable_cushion_count
+                elif "pillow" in block.name.lower():
+                    selection.quantity = item_data.parameters.pillow_count
+                elif "window" in block.name.lower():
+                    selection.quantity = item_data.parameters.window_count
+                elif "rug" in block.name.lower():
+                    selection.quantity = item_data.parameters.rug_count
+            
+            elif block.block_type == "toggle":
+                if "base" in block.name.lower() or "cleaning" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.base_cleaning
+                elif "pet" in block.name.lower() or "hair" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.pet_hair
+                elif "urine" in block.name.lower() or "stain" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.urine_stains
+                elif "drying" in block.name.lower() or "accelerated" in block.name.lower():
+                    selection.toggle_enabled = item_data.parameters.accelerated_drying
+            
+            pricing_selections.append(selection)
+        
+        pricing_request = ServicePricingRequest(pricing_blocks=pricing_selections)
+        
+        # Рассчитываем цену через PricingCalculator
+        result = PricingCalculator.calculate_service_price(service, pricing_request)
+        cost = result["total_price"]
+        duration = result["estimated_time_minutes"]
         
         # Create mock order item for response
         mock_order_item = type('MockOrderItem', (), {
@@ -163,38 +208,5 @@ async def calculate_order(
     )
 
 
-# Authorized service pricing calculation
-@router.post("/services/{service_id}/calculate-price", response_model=ServicePricingResponse)
-async def calculate_service_price(
-    service_id: int,
-    pricing_data: ServicePricingRequest,
-    current_user: Client = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Рассчитать стоимость услуги на основе выбранных опций (требует авторизации)"""
-    service = db.query(Service).filter(Service.id == service_id).first()
-    if not service:
-        raise HTTPException(status_code=404, detail="Услуга не найдена")
-    
-    if not service.is_published:
-        raise HTTPException(status_code=404, detail="Услуга недоступна")
-    
-    # Загружаем блоки ценообразования
-    pricing_blocks = db.query(PricingBlock).filter(
-        PricingBlock.service_id == service_id,
-        PricingBlock.is_active == True
-    ).order_by(PricingBlock.order_index).all()
-    
-    service.pricing_blocks = pricing_blocks
-    
-    # Используем тот же калькулятор, что и в публичном API
-    from app.api.public_pricing import PricingCalculator
-    result = PricingCalculator.calculate_service_price(service, pricing_data)
-    
-    return ServicePricingResponse(
-        total_price=result["total_price"],
-        base_price=0,  # Пока не используем базовую цену
-        breakdown=result["breakdown"],
-        estimated_time_minutes=result["estimated_time_minutes"]
-    )
+# Дублирующий endpoint удален - используется публичный endpoint из public_pricing.py
 

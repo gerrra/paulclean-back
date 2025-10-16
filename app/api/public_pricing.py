@@ -11,10 +11,12 @@ router = APIRouter()
 class PricingCalculator:
     @staticmethod
     def calculate_service_price(service: Service, pricing_data: ServicePricingRequest) -> dict:
-        total_price = 0.0
+        base_price = 0.0
         breakdown = []
         estimated_time = 0
+        toggle_multipliers = []
         
+        # Сначала рассчитываем базовую цену из quantity и type_choice блоков
         for selection in pricing_data.pricing_blocks:
             block = next((b for b in service.pricing_blocks if b.id == selection.block_id), None)
             if not block or not block.is_active:
@@ -22,24 +24,37 @@ class PricingCalculator:
             
             if block.block_type == "quantity":
                 price_info = PricingCalculator._calculate_quantity_price(block, selection)
-                total_price += price_info["price"]
+                base_price += price_info["price"]
                 breakdown.append(price_info)
                 estimated_time += price_info.get("time_minutes", 0)
                 
             elif block.block_type == "type_choice":
                 price_info = PricingCalculator._calculate_type_price(block, selection)
-                total_price += price_info["price"]
+                base_price += price_info["price"]
                 breakdown.append(price_info)
                 estimated_time += price_info.get("time_minutes", 0)
                 
             elif block.block_type == "toggle":
                 price_info = PricingCalculator._calculate_toggle_price(block, selection)
-                total_price += price_info["price"]
                 breakdown.append(price_info)
-                estimated_time += price_info.get("time_minutes", 0)
+                
+                # Собираем процентные надбавки для применения к базовой цене
+                if price_info.get("enabled") and price_info.get("percentage_increase", 0) > 0:
+                    toggle_multipliers.append(price_info["percentage_increase"])
+        
+        # Применяем процентные надбавки к базовой цене
+        total_price = base_price
+        for multiplier in toggle_multipliers:
+            total_price += base_price * (multiplier / 100.0)
+        
+        # Обновляем breakdown с правильными ценами для toggle блоков
+        for item in breakdown:
+            if item.get("block_type") == "toggle" and item.get("enabled"):
+                if item.get("percentage_increase", 0) > 0:
+                    item["price"] = base_price * (item["percentage_increase"] / 100.0)
         
         return {
-            "total_price": total_price,
+            "total_price": round(total_price, 2),
             "breakdown": breakdown,
             "estimated_time_minutes": estimated_time
         }
@@ -102,16 +117,16 @@ class PricingCalculator:
         if not selection.toggle_enabled:
             return {"price": 0, "description": f"{block.name}: отключено"}
         
-        # Процентная надбавка применяется к базовой цене услуги
-        # Здесь нужно будет передавать базовую цену или рассчитывать её отдельно
         percentage_increase = toggle_option.percentage_increase
         
+        # Для toggle блоков возвращаем информацию о надбавке
+        # Сама надбавка будет применена в основном методе calculate_service_price
         return {
             "block_name": block.name,
             "block_type": "toggle",
             "enabled": True,
             "percentage_increase": percentage_increase,
-            "price": 0,  # Будет рассчитано на основе базовой цены
+            "price": 0,  # Будет рассчитано в основном методе
             "description": f"{block.name}: +{percentage_increase}%",
             "time_minutes": 0
         }

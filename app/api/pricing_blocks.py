@@ -89,29 +89,50 @@ async def get_service_pricing_blocks(
     return blocks
 
 
-@router.get("/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
+@router.get("/services/{service_id}/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
 async def get_pricing_block(
+    service_id: int,
     block_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
 ):
-    """Получить конкретный блок ценообразования"""
-    pricing_block = db.query(PricingBlock).filter(PricingBlock.id == block_id).first()
+    """Получить конкретный блок ценообразования в контексте услуги"""
+    # Проверяем существование услуги
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+    
+    # Проверяем существование блока и его принадлежность к услуге
+    pricing_block = db.query(PricingBlock).filter(
+        PricingBlock.id == block_id,
+        PricingBlock.service_id == service_id
+    ).first()
     if not pricing_block:
-        raise HTTPException(status_code=404, detail="Блок ценообразования не найден")
+        raise HTTPException(status_code=404, detail="Блок ценообразования не найден в данной услуге")
     
     return pricing_block
 
-@router.put("/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
+@router.put("/services/{service_id}/pricing-blocks/{block_id}", response_model=PricingBlockResponse)
 async def update_pricing_block(
+    service_id: int,
     block_id: int,
     block_data: PricingBlockUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
-    """Обновить блок ценообразования"""
-    pricing_block = db.query(PricingBlock).filter(PricingBlock.id == block_id).first()
+    """Обновить блок ценообразования в контексте услуги"""
+    # Проверяем существование услуги
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+    
+    # Проверяем существование блока и его принадлежность к услуге
+    pricing_block = db.query(PricingBlock).filter(
+        PricingBlock.id == block_id,
+        PricingBlock.service_id == service_id
+    ).first()
     if not pricing_block:
-        raise HTTPException(status_code=404, detail="Блок ценообразования не найден")
+        raise HTTPException(status_code=404, detail="Блок ценообразования не найден в данной услуге")
     
     # Обновляем основные поля
     if block_data.name is not None:
@@ -166,16 +187,26 @@ async def update_pricing_block(
     
     return pricing_block
 
-@router.delete("/pricing-blocks/{block_id}")
+@router.delete("/services/{service_id}/pricing-blocks/{block_id}")
 async def delete_pricing_block(
+    service_id: int,
     block_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
-    """Удалить блок ценообразования"""
-    pricing_block = db.query(PricingBlock).filter(PricingBlock.id == block_id).first()
+    """Удалить блок ценообразования в контексте услуги"""
+    # Проверяем существование услуги
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+    
+    # Проверяем существование блока и его принадлежность к услуге
+    pricing_block = db.query(PricingBlock).filter(
+        PricingBlock.id == block_id,
+        PricingBlock.service_id == service_id
+    ).first()
     if not pricing_block:
-        raise HTTPException(status_code=404, detail="Блок ценообразования не найден")
+        raise HTTPException(status_code=404, detail="Блок ценообразования не найден в данной услуге")
     
     db.delete(pricing_block)
     db.commit()
