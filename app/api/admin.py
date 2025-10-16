@@ -194,6 +194,48 @@ async def delete_service(
     return {"message": "Service deleted successfully"}
 
 
+@router.post("/services/{service_id}/publish")
+async def publish_service(
+    service_id: int,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Publish service (make it visible to clients)"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found"
+        )
+    
+    service.is_published = True
+    db.commit()
+    db.refresh(service)
+    
+    return {"message": "Service published successfully", "service": service}
+
+
+@router.post("/services/{service_id}/unpublish")
+async def unpublish_service(
+    service_id: int,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Unpublish service (hide it from clients)"""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found"
+        )
+    
+    service.is_published = False
+    db.commit()
+    db.refresh(service)
+    
+    return {"message": "Service unpublished successfully", "service": service}
+
+
 # Cleaner management endpoints
 @router.get("/cleaners", response_model=List[CleanerResponse])
 async def list_cleaners(
